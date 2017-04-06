@@ -13,6 +13,7 @@ import hashlib
 import argparse
 import catkin_utils
 import IPython
+import shutil
 
 def getDatasetList():
     logger = logging.getLogger(__name__)
@@ -27,22 +28,20 @@ def getDatasetList():
             if "name" not in dataset:
                 logger.warning("Malformed dataset entry: 'name' key not found")
                 continue
-            if "url" not in dataset and "webdir" not in dataset:
-                logger.warning("Malformed dataset entry: neither 'url' nor"
-                               " 'webdir' key not found")
+            if "dir" not in dataset:
+                logger.warning("Malformed dataset entry: no 'dir' tag found.")
                 continue
             datasets[dataset["name"]] = dataset           
         return datasets
     raise ValueError("Could not find 'datasets.yaml' in evaluation package.")
 
 def getLocalDatasetsFolder():  
-    evaluation_folder = catkin_utils.catkinFind("evaluation")[0]
-    return evaluation_folder + '/datasets'
+  evaluation_folder = catkin_utils.catkinFindSrc("evaluation_tools")
+  return evaluation_folder + '/datasets'
     
 def getDownloadedDatasets():
     local_datasets_dir = getLocalDatasetsFolder()
-    downloaded_datasets = [name for name in os.listdir(local_datasets_dir)
-                           if os.path.isdir(os.path.join(local_datasets_dir, name))]                             
+    downloaded_datasets = [name for name in os.listdir(local_datasets_dir) if re.search('.*.yaml', name) is None]
     return downloaded_datasets, local_datasets_dir  
 
 def listDatasets():
@@ -125,7 +124,7 @@ def getFileHash(filename):
 
 def downloadDataset(dataset_name, replace = False):
     logger = logging.getLogger(__name__)
-    
+        
     # Check that dataset_name is valid:
     datasets = getDatasetList()
     if dataset_name not in datasets:
@@ -134,70 +133,76 @@ def downloadDataset(dataset_name, replace = False):
         return
     dataset = datasets[dataset_name]
     
-    # Create target directory exists:
-    data_dir = get_datasets_folder()
-    dataset_dir = os.path.join(data_dir, dataset['name'])    
-    if os.path.exists(dataset_dir):
-        logger.warning("Dataset folder already exists: "+dataset_dir)
-        if not replace:
-            return
-        else:
-            logger.info("Delete old dataset folder: "+dataset_dir)
-            os.system("rm -rf " + dataset_dir)
+    # Create target directory:
+    local_data_dir = getLocalDatasetsFolder()
+    #dataset_dir = os.path.join(data_dir, dataset['name'])    
+    #if os.path.exists(dataset_dir):
+    #    logger.warning("Dataset folder already exists: "+dataset_dir)
+    #    if not replace:
+    #        return
+    #    else:
+    #        logger.info("Delete old dataset folder: "+dataset_dir)
+    #        os.system("rm -rf " + dataset_dir)
     
-    logger.info("Creating dataset folder: "+dataset_dir)
-    os.makedirs(dataset_dir)
+    #logger.info("Creating dataset folder: "+dataset_dir)
+    #os.makedirs(dataset_dir)
     
     
     # -------------------------------------------------------------------------
     # Download zip from url
     if 'url' in dataset:    
-    
-        # Download dataset files from server as specified in info YAML.
-        url = dataset['url'].replace('ZE_DATASET_SERVER', ZE_DATASET_SERVER)
-        filename = url.split('/')[-1]    
-        local_filename = os.path.join(dataset_dir, filename)
-        if validFileOnServer(url):
-            downloadFileFromServer(url, local_filename)
-        else:
-            logger.warning('File {0} does not exist on server.'.format(url))
-    
-        # compute a hash of the file
-        downloaded_file_hash = getFileHash(local_filename)
-        version_file = open(os.path.join(dataset_dir, 'version.sha1'), 'w')
-        version_file.write('{0}'.format(downloaded_file_hash)) 
-        version_file.close()
-        
-        # check if hash is ok and write it 
-        if 'sha1' in dataset:
-            if downloaded_file_hash == dataset['sha1']:
-                logger.info("Successfully verified hash-key of downloaded file")
-            else:
-                raise ValueError("Hash of downloaded dataset is not valid: "+filename)
-            
-        # unpack tar.gz
-        if local_filename.split(".")[-2] == 'tar' and local_filename.split(".")[-1] == 'gz':
-            logger.info("Unpacking .tar.gz file...")
-            tfile = tarfile.open(local_filename, 'r:gz')
-            tfile.extractall(dataset_dir)
-            logger.info("...done.")
+      # Download dataset files from server as specified in info YAML.
+      url = dataset['url'].replace('ZE_DATASET_SERVER', ZE_DATASET_SERVER)
+      filename = url.split('/')[-1]    
+      local_filename = os.path.join(dataset_dir, filename)
+      if validFileOnServer(url):
+          downloadFileFromServer(url, local_filename)
+      else:
+          logger.warning('File {0} does not exist on server.'.format(url))
+  
+      # compute a hash of the file
+      downloaded_file_hash = getFileHash(local_filename)
+      version_file = open(os.path.join(dataset_dir, 'version.sha1'), 'w')
+      version_file.write('{0}'.format(downloaded_file_hash)) 
+      version_file.close()
+      
+      # check if hash is ok and write it 
+      if 'sha1' in dataset:
+          if downloaded_file_hash == dataset['sha1']:
+              logger.info("Successfully verified hash-key of downloaded file")
+          else:
+              raise ValueError("Hash of downloaded dataset is not valid: "+filename)
+          
+      # unpack tar.gz
+      if local_filename.split(".")[-2] == 'tar' and local_filename.split(".")[-1] == 'gz':
+          logger.info("Unpacking .tar.gz file...")
+          tfile = tarfile.open(local_filename, 'r:gz')
+          tfile.extractall(dataset_dir)
+          logger.info("...done.")
 
     # -------------------------------------------------------------------------
     # Download a whole directory          
     elif 'webdir' in dataset:
-        webdir = dataset['webdir'].replace("ZE_DATASET_SERVER", ZE_DATASET_SERVER)
-        filenames = extractListOfFilesFromOnlineDirectoryListing(webdir)
-        for filename in filenames:
-            url = os.path.join(webdir, filename)
-            local_filename = os.path.join(dataset_dir, filename)
-            downloadFileFromServer(url, local_filename)            
+      webdir = dataset['webdir'].replace("ZE_DATASET_SERVER", ZE_DATASET_SERVER)
+      filenames = extractListOfFilesFromOnlineDirectoryListing(webdir)
+      for filename in filenames:
+          url = os.path.join(webdir, filename)
+          local_filename = os.path.join(dataset_dir, filename)
+          downloadFileFromServer(url, local_filename)            
+          
+      # Save a version file in the directory
+      if 'version' in dataset:
+          logger.info("Write version '"+str(dataset['version'])+"' to file.")
+          version_file = open(os.path.join(dataset_dir, 'version.txt'), 'w')
+          version_file.write('{0}'.format(str(dataset['version']))) 
+          version_file.close()
             
-        # Save a version file in the directory
-        if 'version' in dataset:
-            logger.info("Write version '"+str(dataset['version'])+"' to file.")
-            version_file = open(os.path.join(dataset_dir, 'version.txt'), 'w')
-            version_file.write('{0}'.format(str(dataset['version']))) 
-            version_file.close()
+    elif 'dir' in dataset:
+      print 'Starting copying of dataset to local folder...' 
+      shutil.copyfile(dataset['dir'] + '/' + dataset['name'], local_data_dir + '/' + dataset['name'])
+      print 'Done.'
+    else:
+      raise Exception("Unclear how to download the dataset.")
            
 if __name__ == '__main__':
     usage = """

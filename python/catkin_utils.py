@@ -3,7 +3,7 @@ import os
 import yaml
 import subprocess
 
-def getCatkinconfig(profile="default"):
+def getCatkinConfig(profile="default"):
     print("TODO: this may fail if you are not inside a catkin package!")
     ws_path = subprocess.check_output(["catkin", "locate"]).split()[0].decode('ascii')
     CATKIN_TOOLS_SUBF = ".catkin_tools"
@@ -31,11 +31,7 @@ def catkinFindSrc(package_name):
     return catkinFindSubfolder(package_name, "src/")
 
 def catkinFindLib(package_name, profile="default"):
-    catkin_config_dict = getCatkinconfig(profile)
-    if catkin_config_dict["install"]:
-        return catkinFindSubfolder(package_name, "install/lib")
-    else:
-        return catkinFindSubfolder(package_name, "devel/lib")
+    return catkinFindSubfolder(package_name, "devel/lib")
 
 def catkinFindCamCalib(ze_cam_id):
     ze_calib_folders = catkinFind("ze_calibration")

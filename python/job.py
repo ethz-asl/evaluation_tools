@@ -8,6 +8,7 @@ import yaml
 import argparse
 import logging
 import catkin_utils
+import IPython
 
 class Job(object):
 
@@ -16,11 +17,11 @@ class Job(object):
         self.logger = logging.getLogger(__name__)
         self.params_dict = {}
         
-    def set_python_executable(self, eval_app, executable):
+    def setPythonExecutable(self, eval_app, executable):
         self.exec_app = eval_app
         self.exec_name = executable
           
-    def load_config_from_folder(self, job_path):
+    def loadConfigFromFolder(self, job_path):
         self.job_path = job_path
         self.logger = logging.getLogger(__name__)
         
@@ -29,18 +30,18 @@ class Job(object):
         if not os.path.isfile(job_filename):
             raise ValueError("Job info file does not exist: " + job_filename)            
         self.info = yaml.safe_load(open(job_filename))
-        self.exec_app = self.info["app_name"]
+        self.exec_app = self.info["app_package_name"]
         self.exec_name = self.info["app_executable"]
-        self.exec_folder = catkin_utils.catkin_find_lib(self.exec_app)
+        self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
         self.exec_path = os.path.join(self.exec_folder, self.info["app_executable"])
         
         if 'parameters' in self.info:
             self.params_dict = self.info['parameters']
         
-    def add_param(self, key, value):
+    def addParam(self, key, value):
         self.params_dict[key] = value
 
-    def _get_cmd_seq(self):
+    def _getCmdSeq(self):
         cmd_seq = []
         if self.exec_name.endswith('.py'):
             cmd_seq.append('rosrun')
@@ -56,20 +57,20 @@ class Job(object):
         return cmd_seq
 
     def execute(self):
-        cmd_seq = self._get_cmd_seq()
+        cmd_seq = self._getCmdSeq()
         self.logger.info("Executing command {}".format(cmd_seq))
         cmd_string = ""
         for cmd in cmd_seq:
             cmd_string = cmd_string + cmd + " "
         os.system(cmd_string)
         
-    def write_summary(self, filename):
+    def writeSummary(self, filename):
         summary_dict = {}
         summary_dict["executable"] = {}
         summary_dict["executable"]["name"] = self.exec_name
         summary_dict["executable"]["path"] = self.exec_path
         summary_dict["executable"]["rev"] = \
-            catkin_utils.get_src_revision(self.exec_app)
+            catkin_utils.getSrcRevision(self.exec_app)
             
         if "cam_id" in self.info:
             summary_dict["calib"] = {}

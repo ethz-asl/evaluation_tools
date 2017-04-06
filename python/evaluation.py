@@ -9,6 +9,7 @@ import argparse
 import logging
 import utils as eval_utils
 from job import Job
+import IPython
 
 class Evaluation(object):
 
@@ -22,14 +23,14 @@ class Evaluation(object):
             raise ValueError("Job info file does not exist: " + job_filename)
         self.job = yaml.safe_load(open(job_filename))
         self.evaluation_scripts = []
-        if "evaluation_scripts" in self.job:
+        if "evaluation_scripts" in self.job and self.job['evaluation_scripts'] is not None:
             self.evaluation_scripts = self.job["evaluation_scripts"]
             self.logger.info("Registering " + str(len(self.evaluation_scripts)) \
                              + " evaluation scripts.")
         else:
             self.logger.info("No evaluation scripts in job.")
         
-    def run_evaluations(self):
+    def runEvaluations(self):
         for evaluation in self.evaluation_scripts:
             self.logger.info("=== Run Evaluation ===")            
             eval_utils.assert_param(evaluation, "app_name")
@@ -53,4 +54,4 @@ if __name__ == '__main__':
        
     if args.job_dir:
         j = Evaluation(args.job_dir)
-        j.run_evaluations()
+        j.runEvaluations()

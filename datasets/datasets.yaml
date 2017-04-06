@@ -1,4 +1,4 @@
-- name: some_name
-  url: http://rpg.ifi.uzh.ch/datasets/tum_fr2_desk.tar.gz
-  date: 2017-01-01
-  webdir: http://129.132.39.115/mapbox-public/datasets
+- name: 20170324_Patio_01_slice.bag
+  date: 2017-03-24
+  robot: Wolle
+  dir: /mnt/mapbox/Datasets/UP-Drive

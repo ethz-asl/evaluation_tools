@@ -27,25 +27,30 @@ class Experiment(object):
         
         self.logger.info("Checking parameters")
         
+        root_folder = catkin_utils.catkinFindSrc("evaluation_tools")
+        if len(root_folder) == 0:
+          raise Exception("Unable to find the root folder of package evaluation_tools in the \
+                          catkin workspace.")
+                
         # Check Parameters
         if not experiment_file.endswith('.yaml'):
             experiment_file += '.yaml'
-        if not os.path.isfile(experiment_file):
+            
+        self.experiment_file = root_folder + '/experiments/' + experiment_file
+        if not os.path.isfile(self.experiment_file):
             raise ValueError("Could not find evaluation YAML file: " + experiment_file)
-        self.experiment_file = experiment_file
         
         if not os.path.exists(results_folder):
-            raise ValueError("Folder to store results does not exist: " + results_folder)            
+          os.makedirs(results_folder)
         self.results_folder = results_folder
                 
         # Read Evaluation File
         self.experiment_filename = os.path.basename(experiment_file).replace('.yaml','')
-        self.experiment_path = os.path.dirname(experiment_file)
         self.eval_dict = yaml.safe_load(open(self.experiment_file))
         self.experiment_file = experiment_file
         
         # Check necessary parameters in evaluation file:
-        eval_utils.assertParam(self.eval_dict, "app_name")        
+        eval_utils.assertParam(self.eval_dict, "app_package_name")        
         eval_utils.assertParam(self.eval_dict, "app_executable")        
         eval_utils.assertParam(self.eval_dict, "datasets")
         eval_utils.checkParam(self.eval_dict, "cam_calib_source", "dataset_folder")
@@ -60,6 +65,7 @@ class Experiment(object):
               + '_' + self.eval_dict['experiment_filename'] 
                     
         # Datasets
+        local_dataset_dir = datasets.getLocalDatasetsFolder()
         available_datasets = datasets.getDatasetList()
         downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
         self.job_paths = []  
@@ -82,44 +88,45 @@ class Experiment(object):
                     downloaded_datasets, local_dataset_dir = datasets.getDownloadedDatasets()
                 
             # Get name of bagfile/csv.
-            self.eval_dict['dataset'] = os.path.join(local_dataset_dir, dataset['name'], dataset['instance'])
+            self.eval_dict['dataset'] = str(os.path.join(local_dataset_dir, dataset['name']))
             if os.path.isfile(self.eval_dict['dataset']):
                 self.dataset_type = 'rosbag'
-            elif os.path.isdir(self.eval_dict['dataset']):
-                self.dataset_type = 'csv'
+            #elif os.path.isdir(self.eval_dict['dataset']):
+            #    self.dataset_type = 'csv'
             else:
                 raise ValueError('Dataset instance does not exist: '+self.eval_dict['dataset'])
                      
             # Find calibration file:
-            #if self.eval_dict["ncamera_calibration_id"] == "ze_calibration":
-            #    self.logger.info("Calibration source: ze_calibration repository")
-            #    cam_calib_folder = catkin_utils.catkin_find_cam_calib(str(self.eval_dict["cam_id"]))
-            #    self.eval_dict["cam_calib_path"] = os.path.join(cam_calib_folder, self.eval_dict["cam_calib_file"])  
-            #    self.eval_dict["cam_calib_rev"] = catkin_utils.get_calib_revision(self.eval_dict["cam_id"])
-            
-            #elif self.eval_dict["cam_calib_source"] == "dataset_folder":
-            #    self.logger.info("Calibration source: dataset folder")
-            #    self.eval_dict["cam_calib_path"] = \
-            #        os.path.join(data_folder, dataset["name"], self.eval_dict["cam_calib_file"])
-            
-            #if not os.path.isfile(self.eval_dict["cam_calib_path"]):
-            #    raise ValueError("Calibration file does not exist: "+self.eval_dict["cam_calib_path"])
-            self.logger.info("Calibration file: " + self.eval_dict["cam_calib_path"])
+            if 'ncamera_calibration_file' in self.eval_dict.keys():
+              ncamera_calibration_file = str(root_folder + '/calibrations/' + self.eval_dict['ncamera_calibration_file'])
+              if not os.path.isfile(ncamera_calibration_file):
+                raise Exception('Unable to find ncamera calibration file: ' + ncamera_calibration_file)
+              
+              self.eval_dict['ncamera_calibration_file'] = ncamera_calibration_file
+              self.logger.info("NCamera calibration file: " + ncamera_calibration_file)
+
+            if 'additional_odometry_calibration_file' in self.eval_dict.keys():
+              additional_odometry_calibration_file = str(root_folder + '/calibrations/' + self.eval_dict['additional_odometry_calibration_file'])
+              if not os.path.isfile(additional_odometry_calibration_file):
+                raise Exception('Unable to find additional odometry calibration file: ' + additional_odometry_calibration_file)
+              
+              self.eval_dict['additional_odometry_calibration_file'] = additional_odometry_calibration_file
+              self.logger.info("Additional odometry calibration file: " + additional_odometry_calibration_file)
+
             
             # Gather all parameters (from files, yaml, sweep, dataset specific)
             # and create the job folder.
             parameters = {}
             if "parameter_files" in self.eval_dict:
-              raise Exception("Currently not supported")
-              #for filename in self.eval_dict["parameter_files"]:
-              #    filepath = os.path.join(self.experiment_path, filename)
-              #    params = yaml.safe_load(open(filepath))
-              #    for key, value in params.items():
-              #        parameters[key] = value # ordering of files is important as we may overwrite parameters.
+              for filename in self.eval_dict["parameter_files"]:
+                filepath = root_folder + '/parameter_files/' + filename
+                params = yaml.safe_load(open(filepath))
+                for key, value in params.items():
+                  parameters[key] = value # ordering of files is important as we may overwrite parameters.
                         
             if "parameters" in self.eval_dict:
-                for key, value in self.eval_dict["parameters"].items():
-                    parameters[key] = value
+              for key, value in self.eval_dict["parameters"].items():
+                parameters[key] = value
                     
             if "parameter_sweep" in self.eval_dict:
               raise Exception("Currently not supported")
@@ -138,12 +145,12 @@ class Experiment(object):
               #    self.job_paths.append(self._create_job_folder(parameters, dataset['name']))
                 
             else:
-                self.eval_dict['experiment_name'] = experiment_basename + \
-                '_' + dataset['name'] + '_' + dataset['instance'].replace('.bag','')
-                self.job_paths.append(self._createJobFolder(parameters, dataset['name']))
+              self.eval_dict['experiment_name'] = str(experiment_basename + '_' \
+                + dataset['name'].replace('.bag',''))
+              self.job_paths.append(self._createJobFolder(parameters, str(dataset['name'])))
                 
     def _createJobFolder(self, parameters, dataset_name):
-        job_folder = os.path.join(self.results_folder, self.eval_dict['experiment_name'])
+        job_folder = str(os.path.join(self.results_folder, self.eval_dict['experiment_name']))
         self.logger.info("==> Creating job folder '{}'".format(job_folder))
         if not os.path.exists(job_folder):
             os.makedirs(job_folder)
@@ -153,15 +160,10 @@ class Experiment(object):
         # Replace variables in parameters:
         job_parameters = copy.deepcopy(parameters)
         job_parameters['log_dir'] = job_folder
-        experiments_folder = catkin_utils.catkin_find_experiments_folder()
         for key, value in job_parameters.items():
-          print 'alpha'
-          IPython.embed()
           if isinstance(value, str):
-              value = value.replace('ZE_EXPERIMENTS', experiments_folder)
-              value = value.replace('DATASET_DIR', os.path.join(self.data_folder, dataset_name))
               value = value.replace('LOG_DIR', job_folder)
-              value = value.replace('CAM_CALIB_FILENAME', self.eval_dict['cam_calib_path'])
+              value = value.replace('NCAM_CALIB_FILENAME', self.eval_dict['ncamera_calibration_file'])
               value = value.replace('BAG_FILENAME', self.eval_dict['dataset'])
               job_parameters[key] = value
 
@@ -196,7 +198,7 @@ class Experiment(object):
         for job_path in self.job_paths:
             self.logger.info("Run job: " + job_path + "/job.yaml")
             j = Job()
-            j.load_config_from_folder(job_path)
+            j.loadConfigFromFolder(job_path)
             j.execute()
             j.writeSummary("job_summary.yaml")
             
@@ -212,7 +214,7 @@ if __name__ == '__main__':
     logger.info('Experiment started')
 
     local_data_folder_default = datasets.getLocalDatasetsFolder()
-    experiments_folder = catkin_utils.catkinFindExperimentsFolder()
+    experiments_folder = catkin_utils.catkinFindSrc('evaluation_tools')
     if experiments_folder:
         input_folder_default = os.path.join(experiments_folder, 'experiments')        
         output_folder_default = os.path.join(experiments_folder, 'results')
@@ -241,4 +243,4 @@ if __name__ == '__main__':
     e.preprocessing()
     
     # Run each job and the evaluation of each job.
-    e.run_and_evaluate()
+    e.runAndEvaluate()
