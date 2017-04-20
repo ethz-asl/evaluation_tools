@@ -164,6 +164,7 @@ class Experiment(object):
           if isinstance(value, str):
               value = value.replace('LOG_DIR', job_folder)
               value = value.replace('NCAM_CALIB_FILENAME', self.eval_dict['ncamera_calibration_file'])
+              value = value.replace('ODOM_CALIB_FILENAME', self.eval_dict['additional_odometry_calibration_file'])
               value = value.replace('BAG_FILENAME', self.eval_dict['dataset'])
               job_parameters[key] = value
 

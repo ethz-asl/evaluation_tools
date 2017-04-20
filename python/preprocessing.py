@@ -10,6 +10,7 @@ import logging
 import utils as eval_utils
 from job import Job
 
+
 class Preprocessing(object):
 
     def __init__(self, job_dir):
@@ -22,7 +23,7 @@ class Preprocessing(object):
             raise ValueError("Job info file does not exist: " + job_filename)
         self.job = yaml.safe_load(open(job_filename))
         self.preprocessing_scripts = []
-        if "preprocessing_scripts" in self.job:
+        if "preprocessing_scripts" in self.job and self.job['preprocessing_scripts'] is not None:
             self.preprocessing_scripts = self.job["preprocessing_scripts"]
             self.logger.info("Registering " + str(len(self.preprocessing_scripts)) \
                              + " preprocessing scripts.")

@@ -8,7 +8,7 @@ import yaml
 import logging
 import tarfile
 #import urllib.request
-import urllib2
+import urllib
 import hashlib
 import argparse
 import catkin_utils
@@ -198,9 +198,9 @@ def downloadDataset(dataset_name, replace = False):
           version_file.close()
             
     elif 'dir' in dataset:
-      print 'Starting copying of dataset to local folder...' 
+      print ('Starting copying of dataset to local folder...')
       shutil.copyfile(dataset['dir'] + '/' + dataset['name'], local_data_dir + '/' + dataset['name'])
-      print 'Done.'
+      print ('Done.')
     else:
       raise Exception("Unclear how to download the dataset.")
            

@@ -1,0 +1,21 @@
+app_package_name: swe_app
+app_executable: swe_app
+
+# Calibration:
+ncamera_calibration_file: Kermit/ncamera.yaml
+additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
+
+# Algorithm settings
+parameter_files:
+ - rafa_test.yaml
+
+# Algorithm settings
+parameters:
+  alsologtostderr: 1
+
+# Evaluation scripts are executed after the experiment.
+evaluation_scripts:
+
+# Dataset
+datasets:
+- name: 20161121_113921.bag

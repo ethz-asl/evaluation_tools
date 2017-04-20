@@ -1,4 +1,4 @@
-- name: 20170324_Patio_01_slice.bag
+- name: 20161121_113921.bag
   date: 2017-03-24
-  robot: Wolle
-  dir: /mnt/mapbox/Datasets/UP-Drive
+  robot: Kermit
+  dir: /mnt/TruX-Shared/data/kermit-hoengg_211116
