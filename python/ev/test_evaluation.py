@@ -6,6 +6,8 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 from math import sqrt
+import matplotlib.patches as mpatches
+
 
 class EntryStats(object):
     def __init__(self):
@@ -30,6 +32,7 @@ class EntryStats(object):
 
         if self.count > 1:
             self.var = self.M2 / (self.count-1)
+            self.stddev = sqrt(self.var)
 
 
 class TestEvaluation(object):
@@ -37,6 +40,9 @@ class TestEvaluation(object):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.output_paths = output_paths
+
+        # To create the bars later
+        self.colors = ['#69c6bf', '#97d7ce', '#b9ee98', '#d5f396', '#f0f79a']
 
         # Load data
         self.datasets = set()
@@ -67,7 +73,10 @@ class TestEvaluation(object):
         bbb = self.marginalize_paramset('param_set_1')
         ccc = self.join_datasets()
         ddd = self.get_metrics_from_joined_dataset(ccc)
-        self.plot_metrics(ddd)
+        eee = self.get_metrics_by_paramset(ccc)
+        self.plot_individual_metrics(ddd)
+        self.plot_metrics_by_paramset(eee)
+        plt.show()
         import ipdb; ipdb.set_trace()
         pass
 
@@ -124,33 +133,85 @@ class TestEvaluation(object):
         for param_label, keys in joined_datasets.items():
             for key, value in keys.items():
                 metrics_dict[key][param_label]["mean"] = value.mean
-                metrics_dict[key][param_label]["var"] = value.var
+                metrics_dict[key][param_label]["stddev"] = value.stddev
 
         return metrics_dict
 
-    def plot_metrics(self, metrics):
+
+    def get_metrics_by_paramset(self, joined_datasets):
+        metrics_dict = defaultdict(lambda: defaultdict(dict))
+        for param_label, keys in joined_datasets.items():
+            # import ipdb; ipdb.set_trace()
+
+            for key, value in keys.items():
+                metrics_dict[param_label][key]["mean"] = value.mean
+                metrics_dict[param_label][key]["stddev"] = value.stddev
+
+        return metrics_dict
+
+
+    def plot_metrics_by_paramset(self, metrics):
+        plt.figure()
+        turn = 0
+        patches = []
+
+        for param_set, metrics in metrics.items():
+
+            N = len(metrics)
+            ind = 1.3*np.arange(N) + 0.3*turn
+
+            means = []
+            stddevs = []
+            for key in sorted(metrics):
+                means.append(metrics[key]["mean"])
+                stddevs.append(metrics[key]["stddev"])
+
+            plt.bar(ind, means, 0.3, color=self.colors[turn], yerr=stddevs)
+
+            # plt.title('{}'.format(param_set), fontsize=14)
+            plt.xlabel('Metric')
+            plt.ylabel('Value')
+            
+            plt.xticks(ind, sorted(metrics))
+            patches.append(mpatches.Patch(color=self.colors[turn], label=param_set))
+            turn += 1
+
+        plt.legend(handles=patches)
+        plt.grid()
+        
+        plt.show()
+
+
+    def plot_individual_metrics(self, metrics):
+        plt.figure()
+        turn = 0
+        patches = []
+
         for metric, occurrences in metrics.items():
 
             N = len(occurrences)
-            ind = np.arange(N)
+            ind = 1.3*np.arange(N) + 0.2*turn
             
             means = []
             stddevs = []
             for key in sorted(occurrences):
                 means.append(occurrences[key]["mean"])
-                stddevs.append(occurrences[key]["var"])
+                stddevs.append(occurrences[key]["stddev"])
 
-            plt.figure()
-            plt.bar(ind, means, 0.2, color='#d62728', yerr=stddevs)
+            plt.bar(ind, means, 0.2, color=self.colors[turn], yerr=stddevs)
 
-            plt.title('Results for {}'.format(metric), fontsize=14)
+            # plt.title('{}'.format(metric), fontsize=14)
             plt.xlabel('Parameter set')
             plt.ylabel('Value')
             
             plt.xticks(ind, sorted(occurrences))
+            patches.append(mpatches.Patch(color=self.colors[turn], label=metric))
+            turn += 1
+
+        plt.legend(handles=patches)
+        plt.grid()
 
         plt.show()
-
 
 
 if __name__ == '__main__':
@@ -163,7 +224,11 @@ if __name__ == '__main__':
     output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test1/output.yaml')
     output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test2/output.yaml')
     output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test3/output.yaml')
+    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test4/output.yaml')
+    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test5/output.yaml')
+    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test6/output.yaml')
+    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test7/output.yaml')
+    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test8/output.yaml')
+    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test9/output.yaml')
 
     ev = TestEvaluation(output_paths)
-
-    
