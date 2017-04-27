@@ -3,22 +3,22 @@
 Zurich Eye
 """
 
-import os
-import yaml
-import copy
-import time
-import shutil
-import logging
 import argparse
-import numpy as np
-from job import Job
-from evaluation import Evaluation
-from preprocessing import Preprocessing
-from rafa_evaluation import TestEvaluation
 import catkin_utils
-import utils as eval_utils
+import copy
 import datasets
 import IPython
+import logging
+import numpy as np
+import os
+import shutil
+import time
+import utils as eval_utils
+import yaml
+from evaluation import Evaluation
+from job import Job
+from preprocessing import Preprocessing
+from rafa_evaluation import TestEvaluation
 
 class Experiment(object):
     
@@ -60,7 +60,11 @@ class Experiment(object):
         # Information stored in the job but not used to run the algorithm.
         self.eval_dict['experiment_generated_time'] = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         self.eval_dict['experiment_filename'] = self.experiment_filename
-        
+
+        # TODO add a nice comment here
+        eval_utils.checkParam(self.eval_dict, "whitelisted_metrics", [])
+        eval_utils.checkParam(self.eval_dict, "blacklisted_metrics", [])
+
         # Set experiment basename
         if "experiment_name" not in self.eval_dict:
           experiment_basename = self.eval_dict['experiment_generated_time'] \
@@ -130,7 +134,7 @@ class Experiment(object):
         
         # and create the job folder.
         for parameter_file in self.parameter_files:
-            filepath = root_folder + '/parameter_files/' + filename
+            filepath = root_folder + '/parameter_files/' + parameter_file
             params = yaml.safe_load(open(filepath))
             for dataset in self.datasets:
                 self.eval_dict['experiment_name'] = str(experiment_basename + '/' \
@@ -225,9 +229,10 @@ class Experiment(object):
     def runRafaEvaluation(self):
         evaluation_files = []
         for job_path in self.job_paths:
-            evaluation_files.append(job_path + "/statistics.yaml")
+            evaluation_files.append(job_path + "/formatted_stats.yaml")
 
-        j = TestEvaluation(evaluation_files)
+        j = TestEvaluation(evaluation_files, self.eval_dict["whitelisted_metrics"],
+            self.eval_dict["blacklisted_metrics"])
 
           
 if __name__ == '__main__':

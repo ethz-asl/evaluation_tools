@@ -7,12 +7,10 @@ additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
 
 # Algorithm settings
 parameter_files:
- - rafa_test.yaml
- - rafa_test_2.yaml
-
-# Algorithm settings
-parameters:
-  alsologtostderr: 1
+ - orb_500.yaml
+ - orb_800.yaml
+ - dorb_500.yaml
+ - dorb_800.yaml
 
 # Evaluation scripts are executed after the experiment.
 evaluation_scripts:
@@ -23,4 +21,11 @@ evaluation_scripts:
 # Dataset
 datasets:
 - name: 20161121_113921.bag
-- name: 20161121_113921_2.bag
+# - name: 20161121_113921_2.bag
+
+whitelisted_metrics:
+  - keypoint tracking (1 image) in ms
+
+# Blacklist is only checked if there is no whitelist, or if it's empty
+blacklisted_metrics:
+  - swe-optimize_ num_variables
