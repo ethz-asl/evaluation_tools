@@ -31,17 +31,23 @@ class Evaluation(object):
             self.logger.info("No evaluation scripts in job.")
         
     def runEvaluations(self):
-        for evaluation in self.evaluation_scripts:
-            self.logger.info("=== Run Evaluation ===")            
-            eval_utils.assert_param(evaluation, "app_name")
-            eval_utils.assert_param(evaluation, "app_executable")            
+        for evaluation, eval_arguments in self.evaluation_scripts.items():
+
+            self.logger.info("=== Run Evaluation ===")
+            eval_utils.assertParam(eval_arguments, "app_name")
+            eval_utils.assertParam(eval_arguments, "app_executable")
             jp = Job()
-            jp.set_python_executable(evaluation["app_name"], evaluation["app_executable"])
-            jp.add_param("data_dir", self.job_dir)
-            if "parameters" in evaluation:
-                for key, value in evaluation["parameters"].items():
-                    jp.add_param(key, value)
+            jp.setPythonExecutable(eval_arguments["app_name"], eval_arguments["app_executable"])
+            jp.addParam("job_dir", self.job_dir)
+            if "parameter_file" in self.job:
+                jp.addParam("parameter_file", self.job["parameter_file"])
+            if "dataset" in self.job:
+                jp.addParam("dataset", self.job["dataset"])
+            if "parameters" in eval_arguments:
+                for key, value in eval_arguments["parameters"].items():
+                    jp.addParam(key, value)
             jp.execute()
+
 
 if __name__ == '__main__':
     

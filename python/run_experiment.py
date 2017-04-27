@@ -14,6 +14,7 @@ import numpy as np
 from job import Job
 from evaluation import Evaluation
 from preprocessing import Preprocessing
+from rafa_evaluation import TestEvaluation
 import catkin_utils
 import utils as eval_utils
 import datasets
@@ -53,6 +54,7 @@ class Experiment(object):
         eval_utils.assertParam(self.eval_dict, "app_package_name")        
         eval_utils.assertParam(self.eval_dict, "app_executable")        
         eval_utils.assertParam(self.eval_dict, "datasets")
+        eval_utils.assertParam(self.eval_dict, "parameter_files")
         eval_utils.checkParam(self.eval_dict, "cam_calib_source", "dataset_folder")
         
         # Information stored in the job but not used to run the algorithm.
@@ -63,12 +65,30 @@ class Experiment(object):
         if "experiment_name" not in self.eval_dict:
           experiment_basename = self.eval_dict['experiment_generated_time'] \
               + '_' + self.eval_dict['experiment_filename'] 
-                    
+        
+        # Find calibration files:
+        if 'ncamera_calibration_file' in self.eval_dict.keys():
+          ncamera_calibration_file = str(root_folder + '/calibrations/' + self.eval_dict['ncamera_calibration_file'])
+          if not os.path.isfile(ncamera_calibration_file):
+            raise Exception('Unable to find ncamera calibration file: ' + ncamera_calibration_file)
+          
+          self.eval_dict['ncamera_calibration_file'] = ncamera_calibration_file
+          self.logger.info("NCamera calibration file: " + ncamera_calibration_file)
+
+        if 'additional_odometry_calibration_file' in self.eval_dict.keys():
+          additional_odometry_calibration_file = str(root_folder + '/calibrations/' + self.eval_dict['additional_odometry_calibration_file'])
+          if not os.path.isfile(additional_odometry_calibration_file):
+            raise Exception('Unable to find additional odometry calibration file: ' + additional_odometry_calibration_file)
+          
+          self.eval_dict['additional_odometry_calibration_file'] = additional_odometry_calibration_file
+          self.logger.info("Additional odometry calibration file: " + additional_odometry_calibration_file)
+  
         # Datasets
         local_dataset_dir = datasets.getLocalDatasetsFolder()
         available_datasets = datasets.getDatasetList()
         downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
-        self.job_paths = []  
+        self.job_paths = []
+        self.datasets = []
         for dataset in self.eval_dict['datasets']:        
             # Check if dataset is available:
             if dataset['name'] not in downloaded_datasets:
@@ -88,68 +108,58 @@ class Experiment(object):
                     downloaded_datasets, local_dataset_dir = datasets.getDownloadedDatasets()
                 
             # Get name of bagfile/csv.
-            self.eval_dict['dataset'] = str(os.path.join(local_dataset_dir, dataset['name']))
-            if os.path.isfile(self.eval_dict['dataset']):
+            dataset_path = str(os.path.join(local_dataset_dir, dataset['name']))
+            self.datasets.append(dataset_path)
+            if os.path.isfile(dataset_path):
                 self.dataset_type = 'rosbag'
             #elif os.path.isdir(self.eval_dict['dataset']):
             #    self.dataset_type = 'csv'
             else:
                 raise ValueError('Dataset instance does not exist: '+self.eval_dict['dataset'])
                      
-            # Find calibration file:
-            if 'ncamera_calibration_file' in self.eval_dict.keys():
-              ncamera_calibration_file = str(root_folder + '/calibrations/' + self.eval_dict['ncamera_calibration_file'])
-              if not os.path.isfile(ncamera_calibration_file):
-                raise Exception('Unable to find ncamera calibration file: ' + ncamera_calibration_file)
-              
-              self.eval_dict['ncamera_calibration_file'] = ncamera_calibration_file
-              self.logger.info("NCamera calibration file: " + ncamera_calibration_file)
-
-            if 'additional_odometry_calibration_file' in self.eval_dict.keys():
-              additional_odometry_calibration_file = str(root_folder + '/calibrations/' + self.eval_dict['additional_odometry_calibration_file'])
-              if not os.path.isfile(additional_odometry_calibration_file):
-                raise Exception('Unable to find additional odometry calibration file: ' + additional_odometry_calibration_file)
-              
-              self.eval_dict['additional_odometry_calibration_file'] = additional_odometry_calibration_file
-              self.logger.info("Additional odometry calibration file: " + additional_odometry_calibration_file)
-
-            
-            # Gather all parameters (from files, yaml, sweep, dataset specific)
-            # and create the job folder.
-            parameters = {}
-            if "parameter_files" in self.eval_dict:
-              for filename in self.eval_dict["parameter_files"]:
-                filepath = root_folder + '/parameter_files/' + filename
-                params = yaml.safe_load(open(filepath))
-                for key, value in params.items():
-                  parameters[key] = value # ordering of files is important as we may overwrite parameters.
-                        
-            if "parameters" in self.eval_dict:
-              for key, value in self.eval_dict["parameters"].items():
-                parameters[key] = value
-                    
-            if "parameter_sweep" in self.eval_dict:
-              raise Exception("Currently not supported")
-              #self.logger.info("Generating parameter sweep jobs")
-              #param_sweep = self.eval_dict["parameter_sweep"]
-              #p_name = param_sweep["name"]
-              #p_min = param_sweep["min"]
-              #p_max = param_sweep["max"]
-              #p_num_steps = param_sweep["num_steps"]
-              
-              #for value in np.linspace(p_min, p_max, p_num_steps):
-              #    parameters[p_name] = float(value)
-              #    self.eval_dict['experiment_name'] = experiment_basename + \
-              #    '_' + dataset['name'] + '_' + dataset['instance'].replace('.bag','') + \
-              #    '_' + p_name + '=' + str(value) 
-              #    self.job_paths.append(self._create_job_folder(parameters, dataset['name']))
-                
+        # Gather all parameters (from files, yaml, sweep, dataset specific)
+        self.parameter_files = []
+        for filename in self.eval_dict["parameter_files"]:
+            if os.path.isfile(root_folder + '/parameter_files/' + filename):
+                self.parameter_files.append(filename)
             else:
-              self.eval_dict['experiment_name'] = str(experiment_basename + '_' \
-                + dataset['name'].replace('.bag',''))
-              self.job_paths.append(self._createJobFolder(parameters, str(dataset['name'])))
+                raise ValueError(filename + ' parameter file was not found')
+            # filepath = root_folder + '/parameter_files/' + filename
+            # for key, value in params.items():
+            #     parameters[key] = value # ordering of files is important as we may overwrite parameters.
+        
+        # and create the job folder.
+        for parameter_file in self.parameter_files:
+            filepath = root_folder + '/parameter_files/' + filename
+            params = yaml.safe_load(open(filepath))
+            for dataset in self.datasets:
+                self.eval_dict['experiment_name'] = str(experiment_basename + '/' \
+                    + os.path.basename(dataset).replace('.bag','') + '__' \
+                    + parameter_file.replace('.yaml', ''))
+                self.job_paths.append(self._createJobFolder(params, str(dataset), str(parameter_file)))
                 
-    def _createJobFolder(self, parameters, dataset_name):
+        # if "parameter_sweep" in self.eval_dict:
+        #     raise Exception("Currently not supported")
+        #     #self.logger.info("Generating parameter sweep jobs")
+        #     #param_sweep = self.eval_dict["parameter_sweep"]
+        #     #p_name = param_sweep["name"]
+        #     #p_min = param_sweep["min"]
+        #     #p_max = param_sweep["max"]
+        #     #p_num_steps = param_sweep["num_steps"]
+
+        #     #for value in np.linspace(p_min, p_max, p_num_steps):
+        #     #    parameters[p_name] = float(value)
+        #     #    self.eval_dict['experiment_name'] = experiment_basename + \
+        #     #    '_' + dataset['name'] + '_' + dataset['instance'].replace('.bag','') + \
+        #     #    '_' + p_name + '=' + str(value) 
+        #     #    self.job_paths.append(self._create_job_folder(parameters, dataset['name']))
+            
+        # else:
+        #     self.eval_dict['experiment_name'] = str(experiment_basename + '_' \
+        #         + dataset['name'].replace('.bag',''))
+        #     self.job_paths.append(self._createJobFolder(parameters, str(dataset['name'])))
+                
+    def _createJobFolder(self, parameters, dataset_name, parameter_file):
         job_folder = str(os.path.join(self.results_folder, self.eval_dict['experiment_name']))
         self.logger.info("==> Creating job folder '{}'".format(job_folder))
         if not os.path.exists(job_folder):
@@ -160,16 +170,21 @@ class Experiment(object):
         # Replace variables in parameters:
         job_parameters = copy.deepcopy(parameters)
         job_parameters['log_dir'] = job_folder
+        job_parameters['swe_write_statistics_to_file'] = 1 # TODO make this an option
         for key, value in job_parameters.items():
           if isinstance(value, str):
               value = value.replace('LOG_DIR', job_folder)
               value = value.replace('NCAM_CALIB_FILENAME', self.eval_dict['ncamera_calibration_file'])
               value = value.replace('ODOM_CALIB_FILENAME', self.eval_dict['additional_odometry_calibration_file'])
-              value = value.replace('BAG_FILENAME', self.eval_dict['dataset'])
+              value = value.replace('BAG_FILENAME', dataset_name)
               job_parameters[key] = value
 
         # Write options to file
         job_settings = copy.deepcopy(self.eval_dict)
+        del job_settings['parameter_files']
+        del job_settings['datasets']
+        job_settings['parameter_file'] = parameter_file
+        job_settings['dataset'] = dataset_name
         job_settings['parameters'] = job_parameters
         job_filename = os.path.join(job_folder, "job.yaml")
         self.logger.info("Write " + job_filename)
@@ -193,7 +208,7 @@ class Experiment(object):
         for job_path in self.job_paths:
             self.logger.info("Preprocessing: " + job_path)
             j = Preprocessing(job_path)            
-            j.run_preprocessing()
+            j.runPreprocessing()
         
     def runAndEvaluate(self):       
         for job_path in self.job_paths:
@@ -204,9 +219,16 @@ class Experiment(object):
             j.writeSummary("job_summary.yaml")
             
             self.logger.info("Run evaluation: " + job_path)
-            j = Evaluation(job_path)            
+            j = Evaluation(job_path)
             j.runEvaluations()
-          
+
+    def runRafaEvaluation(self):
+        evaluation_files = []
+        for job_path in self.job_paths:
+            evaluation_files.append(job_path + "/statistics.yaml")
+
+        j = TestEvaluation(evaluation_files)
+
           
 if __name__ == '__main__':
     
@@ -245,3 +267,5 @@ if __name__ == '__main__':
     
     # Run each job and the evaluation of each job.
     e.runAndEvaluate()
+
+    e.runRafaEvaluation()

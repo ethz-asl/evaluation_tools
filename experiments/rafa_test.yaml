@@ -8,6 +8,7 @@ additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
 # Algorithm settings
 parameter_files:
  - rafa_test.yaml
+ - rafa_test_2.yaml
 
 # Algorithm settings
 parameters:
@@ -15,7 +16,11 @@ parameters:
 
 # Evaluation scripts are executed after the experiment.
 evaluation_scripts:
+  format_statistics:
+    app_name: evaluation_tools
+    app_executable: format_statistics.py
 
 # Dataset
 datasets:
 - name: 20161121_113921.bag
+- name: 20161121_113921_2.bag

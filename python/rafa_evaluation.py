@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-import logging
-import yaml
-import os
 from collections import defaultdict
-import numpy as np
-import matplotlib.pyplot as plt
 from math import sqrt
+import logging
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import yaml
 
 
 class EntryStats(object):
@@ -18,7 +18,7 @@ class EntryStats(object):
         self.data = []
 
 
-    def add_sample(self, sample):
+    def addSample(self, sample):
         self.data.append(sample)
         """
         Using Welford algorithm
@@ -69,19 +69,19 @@ class TestEvaluation(object):
         self.logger.info("Extracted data from {} runs, across {} datasets and {} parameter sets."
                          "".format(len(output_paths), len(self.datasets), len(self.parameter_sets)))
 
-        aaa = self.marginalize_dataset('test2.bag')
-        bbb = self.marginalize_paramset('param_set_1')
-        ccc = self.join_datasets()
-        ddd = self.get_metrics_from_joined_dataset(ccc)
-        eee = self.get_metrics_by_paramset(ccc)
-        self.plot_individual_metrics(ddd)
-        self.plot_metrics_by_paramset(eee)
+        aaa = self.marginalizeDataset('test2.bag')
+        bbb = self.marginalizeParamset('param_set_1')
+        ccc = self.joinDatasets()
+        ddd = self.getMetricsFromJoinedDataset(ccc)
+        eee = self.getMetricsByParamset(ccc)
+        self.plotIndividualMetrics(ddd)
+        self.plotMetricsByParamset(eee)
         plt.show()
         import ipdb; ipdb.set_trace()
         pass
 
 
-    def marginalize_dataset(self, dataset):
+    def marginalizeDataset(self, dataset):
         if dataset not in self.datasets:
             raise ValueError("Could not marginalize {}: Dataset not found.".format(dataset))
 
@@ -94,7 +94,7 @@ class TestEvaluation(object):
         return result
 
 
-    def marginalize_paramset(self, param_set):
+    def marginalizeParamset(self, param_set):
         if param_set not in self.parameter_sets:
             raise ValueError("Could not marginalize {}: Parameter set not found.".format(param_set))
 
@@ -106,7 +106,7 @@ class TestEvaluation(object):
         return result
 
 
-    def join_datasets(self, datasets='all'):
+    def joinDatasets(self, datasets='all'):
         # Join all datasets by default
         if datasets=='all':
             datasets = self.datasets
@@ -115,7 +115,7 @@ class TestEvaluation(object):
 
         result_dict = defaultdict(dict)
         for dataset in datasets:
-            dataset_runs = self.marginalize_dataset(dataset)
+            dataset_runs = self.marginalizeDataset(dataset)
             # dataset_runs is a dict of form {param_label: { a: 1,
             #                                                b: 2,
             #                                                c: 3 }
@@ -123,12 +123,12 @@ class TestEvaluation(object):
                 for key, metric in run_results.items():
                     if (key not in result_dict[param_label].keys()):
                         result_dict[param_label][key] = EntryStats()
-                    result_dict[param_label][key].add_sample(metric)
+                    result_dict[param_label][key].addSample(metric)
 
         return result_dict # make this a proper class I think
 
 
-    def get_metrics_from_joined_dataset(self, joined_datasets):
+    def getMetricsFromJoinedDataset(self, joined_datasets):
         metrics_dict = defaultdict(lambda: defaultdict(dict))
         for param_label, keys in joined_datasets.items():
             for key, value in keys.items():
@@ -138,7 +138,7 @@ class TestEvaluation(object):
         return metrics_dict
 
 
-    def get_metrics_by_paramset(self, joined_datasets):
+    def getMetricsByParamset(self, joined_datasets):
         metrics_dict = defaultdict(lambda: defaultdict(dict))
         for param_label, keys in joined_datasets.items():
             # import ipdb; ipdb.set_trace()
@@ -150,7 +150,7 @@ class TestEvaluation(object):
         return metrics_dict
 
 
-    def plot_metrics_by_paramset(self, metrics):
+    def plotMetricsByParamset(self, metrics):
         plt.figure()
         turn = 0
         patches = []
@@ -182,7 +182,7 @@ class TestEvaluation(object):
         plt.show()
 
 
-    def plot_individual_metrics(self, metrics):
+    def plotIndividualMetrics(self, metrics):
         plt.figure()
         turn = 0
         patches = []

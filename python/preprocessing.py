@@ -30,7 +30,7 @@ class Preprocessing(object):
         else:
             self.logger.info("No preprocessing scripts in job.")
         
-    def run_preprocessing(self):
+    def runPreprocessing(self):
         for script in self.preprocessing_scripts:
             self.logger.info("=== Run Preprocessing ===")            
             eval_utils.assert_param(script, "app_name")
@@ -54,4 +54,4 @@ if __name__ == '__main__':
        
     if args.job_dir:
         j = Preprocessing(args.job_dir)
-        j.run_preprocessing()
+        j.runPreprocessing()
