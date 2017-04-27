@@ -13,35 +13,46 @@ class Metric(object):
     def __init__(self):
         self.count = 0
         self.mean = 0
-        self.var = 0
         self.stddev = 0
+        self.var = 0
         self.min = float('nan')
         self.max = float('nan')
-        self.data = []
 
 
     def addSample(self, sample):
-        self.data.append(sample)
+        m = Metric()
+        m.count = sample["samples"]
+        m.mean = sample["mean"]
+        m.stddev = sample["stddev"]
+        m.var = m.stddev * m.stddev
+        m.min = sample["min"]
+        m.max = sample["max"]
+
+        self.joinMetric(m)
+
+
+    def joinMetric(self, other):
         if self.count == 0:
-            self.mean = sample["mean"]
-            self.var = sample["stddev"] * sample["stddev"]
-            self.stddev = sqrt(self.var)
-            self.min = sample["min"]
-            self.max = sample["max"]
+            self.mean = other.mean
+            self.var = other.var
+            self.stddev = other.stddev
+            self.min = other.min
+            self.max = other.max
         # TODO check the formulas
         else:
-            self.mean = (self.mean * self.count + sample["mean"] * sample["samples"]) \
-                        / (self.count + sample["samples"])
+            self.mean = (self.mean * self.count + other.mean * other.count) \
+                        / (self.count + other.count)
 
-            self.var = ((self.count - 1) * self.var + (sample["samples"] - 1) * sample["stddev"] * sample["stddev"] \
-                       + (self.count * sample["samples"]) / (self.count + sample["samples"]) \
-                       * (self.mean * self.mean + sample["mean"] * sample["mean"] - 2 * self.mean * sample["mean"])) \
-                       / (self.count + sample["samples"] - 1)
+            self.var = ((self.count - 1) * self.var + (other.count - 1) * other.var \
+                       + (self.count * other.count) / (self.count + other.count) \
+                       * (self.mean * self.mean + other.mean * other.mean - 2 * self.mean * other.mean)) \
+                       / (self.count + other.count - 1)
             self.stddev = sqrt(self.var)
 
-            self.min = min(self.min, sample["min"])
-            self.max = max(self.max, sample["max"])
-        self.count += sample["samples"]
+            self.min = min(self.min, other.min)
+            self.max = max(self.max, other.max)
+
+        self.count += other.count
 
 
 class TestEvaluation(object):
@@ -62,6 +73,7 @@ class TestEvaluation(object):
         self.parameter_files = set()
         self.metrics = defaultdict((dict))
 
+        self.metrics = defaultdict(lambda: defaultdict(Metric))
         for file in evaluation_paths:
             if not os.path.isfile(file):
                 raise ValueError("Output file does not exist: {}".format(file))
@@ -82,7 +94,8 @@ class TestEvaluation(object):
             self.datasets.add(dataset)
             self.parameter_files.add(parameter_file)
 
-            self.metrics[(dataset, parameter_file)] = metrics
+            for metric, values in metrics.items():
+                self.metrics[(dataset, parameter_file)][metric].addSample(values)
 
         self.logger.info("Extracted data from {} runs, across {} datasets and {} parameter sets."
                          "".format(len(self.evaluation_paths), len(self.datasets), len(self.parameter_files)))
@@ -104,6 +117,7 @@ class TestEvaluation(object):
 
         output_dict = {}
         # output_dict['_dataset'] = dataset
+
         for parameter_file in self.parameter_files:
             if (dataset, parameter_file) in self.metrics.keys():
                 output_dict[parameter_file] = self.metrics[(dataset, parameter_file)]
@@ -133,16 +147,17 @@ class TestEvaluation(object):
         result_dict = defaultdict(dict)
         for dataset in datasets:
             dataset_runs = self.marginalizeDataset(dataset)
-            # dataset_runs is a dict of form {parameter_file: { a: 1,
+            # TODO Obsolete comment dataset_runs is a dict of form {parameter_file: { a: 1,
             #                                                   b: 2,
             #                                                   c: 3 }
             for parameter_file, metrics in dataset_runs.items():
                 for key, metric in metrics.items():
                     if key not in result_dict[parameter_file].keys():
                         result_dict[parameter_file][key] = Metric()
-                    result_dict[parameter_file][key].addSample(metric)
 
-        return result_dict # make this a proper class I think
+                    result_dict[parameter_file][key].joinMetric(metric)
+
+        return result_dict # TODO make this a proper class I think
 
 
     def getMetricsFromJoinedDataset(self, joined_datasets):
@@ -168,6 +183,7 @@ class TestEvaluation(object):
                 metrics_dict[parameter_file][key]["max"] = value.max
                 metrics_dict[parameter_file][key]["min"] = value.min
                 metrics_dict[parameter_file][key]["count"] = value.count
+
         return metrics_dict
 
 
@@ -241,15 +257,7 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.info('Evaluation started')
     
-    output_paths=[]
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test1/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test2/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test3/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test4/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test5/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test6/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test7/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test8/output.yaml')
-    output_paths.append('/home/rafa/maplab_ws/src/evaluation_tools/results/test9/output.yaml')
+    # TODO add evaliuation paths as arg parameter
+    evaluation_paths=[]
 
-    ev = TestEvaluation(output_paths)
+    ev = TestEvaluation(evaluation_paths)
