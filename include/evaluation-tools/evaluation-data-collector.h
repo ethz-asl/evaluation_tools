@@ -119,22 +119,22 @@ class EvaluationDataCollectorImpl {
 
 /// \class DummyVizDataCollector
 /// \brief A dummy class that has the visualization interface but does nothing.
-class VizDataCollectorDummy {
+class EvaluationDataCollectorDummy {
  public:
   template<typename DataType> class PrintChannel;
   typedef EvaluationDataCollectorImpl::SlotId SlotId;
 
  private:
   // Singleton class.
-  VizDataCollectorDummy() = default;
-  VizDataCollectorDummy(const VizDataCollectorDummy&) = delete;
+  EvaluationDataCollectorDummy() = default;
+  EvaluationDataCollectorDummy(const EvaluationDataCollectorDummy&) = delete;
 
  public:
-  static VizDataCollectorDummy& Instance() {
-    static VizDataCollectorDummy instance;
+  static EvaluationDataCollectorDummy& Instance() {
+    static EvaluationDataCollectorDummy instance;
     return instance;
   }
-  ~VizDataCollectorDummy() = default;
+  ~EvaluationDataCollectorDummy() = default;
   void reset() {}
 
   //////////////////////////////////////////////////////////////
@@ -211,9 +211,9 @@ class EvaluationDataCollectorImpl::PrintChannel {
 };
 
 template<typename DataType>
-class VizDataCollectorDummy::PrintChannel {
+class EvaluationDataCollectorDummy::PrintChannel {
  public:
-  friend VizDataCollectorDummy;
+  friend EvaluationDataCollectorDummy;
   explicit PrintChannel(const EvaluationDataCollectorImpl::SlotId&, const std::string&) {}
   explicit PrintChannel(const std::string&) {}
   inline friend std::ostream& operator<<(std::ostream& out, const PrintChannel<DataType>&) {
