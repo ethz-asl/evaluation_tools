@@ -27,18 +27,9 @@ template<typename DataType> class Channel;
 #endif
 
 namespace internal {
-/// \class VizDataCollector
-/// \brief This class is implemented as a singleton to collect arbitrary visualization data that
-///        can be associated with an aslam::NFrame id. A visualizer can be triggered to fetch
-///        all data associated with a given NFrameId and render a view from it. The bound the
-///        memory there is an upper limit on the number NFrameId slots the visualizer should
-///        therefore free processed slots.
-///        An e.g. storage layout could look like this:
-///        VizDataCollector (global singleton) -->  NFrameId0 --> Channel ("nframe")
-///                                                           --> Channel ("outlier_tracks")
-///                                            -->  NFrameId1 --> Channel ("nframe")
-///                                                           --> Channel ("awsome_coffee_mug")
-///                                                           --> Channel ("outlier_tracks")
+/// \class EvaluationDataCollector
+/// \brief This class is implemented as a singleton to collect arbitrary evaluation data that
+///        can be associated with an aslam::NFrame id.
 class EvaluationDataCollectorImpl {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -50,13 +41,13 @@ class EvaluationDataCollectorImpl {
   // Singleton class.
   EvaluationDataCollectorImpl() = default;
   EvaluationDataCollectorImpl(const EvaluationDataCollectorImpl&) = delete;
+  virtual ~EvaluationDataCollectorImpl() = default;
 
  public:
   static EvaluationDataCollectorImpl& Instance() {
     static EvaluationDataCollectorImpl instance;
     return instance;
   }
-  ~EvaluationDataCollectorImpl() = default;
 
   void reset() {
     std::lock_guard<std::mutex> lock(m_channel_groups_);
@@ -101,6 +92,7 @@ class EvaluationDataCollectorImpl {
  public:
   bool hasSlot(const SlotId& slot_id) const;
   void removeSlotIfAvailable(const SlotId& slot_id);
+  void getAllSlotIds(std::unordered_set<SlotId>* slot_ids) const;
 
  private:
   ChannelGroup* getSlot(const SlotId& slot_id);
@@ -128,13 +120,13 @@ class EvaluationDataCollectorDummy {
   // Singleton class.
   EvaluationDataCollectorDummy() = default;
   EvaluationDataCollectorDummy(const EvaluationDataCollectorDummy&) = delete;
+  virtual ~EvaluationDataCollectorDummy() = default;
 
  public:
   static EvaluationDataCollectorDummy& Instance() {
     static EvaluationDataCollectorDummy instance;
     return instance;
   }
-  ~EvaluationDataCollectorDummy() = default;
   void reset() {}
 
   //////////////////////////////////////////////////////////////
@@ -214,8 +206,8 @@ template<typename DataType>
 class EvaluationDataCollectorDummy::PrintChannel {
  public:
   friend EvaluationDataCollectorDummy;
-  explicit PrintChannel(const EvaluationDataCollectorImpl::SlotId&, const std::string&) {}
-  explicit PrintChannel(const std::string&) {}
+  explicit PrintChannel(const EvaluationDataCollectorImpl::SlotId&, const std::string&) {};
+  explicit PrintChannel(const std::string&) {};
   inline friend std::ostream& operator<<(std::ostream& out, const PrintChannel<DataType>&) {
     out << "NA";
     return out;
