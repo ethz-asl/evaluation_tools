@@ -9,16 +9,16 @@ namespace evaluation {
 namespace internal {
 
 template<typename DataType>
-void EvaluationDataCollectorImpl::pushData(const SlotId& slot_id, const std::string& channel_name,
-                                    const DataType& data) {
+void EvaluationDataCollectorImpl::pushData(
+    const SlotId& slot_id, const std::string& channel_name, const DataType& data) {
   ChannelGroup* slot = getSlotAndCreateIfNecessary(slot_id);
   CHECK_NOTNULL(slot);
   slot->setChannel(channel_name, data);
 }
 
 template<typename DataType>
-bool EvaluationDataCollectorImpl::getDataSafe(const SlotId& slot_id, const std::string& channel_name,
-                                       const DataType** data) const {
+bool EvaluationDataCollectorImpl::getDataSafe(
+    const SlotId& slot_id, const std::string& channel_name, const DataType** data) const {
   const ChannelGroup* slot;
   if ((slot = getSlot(slot_id)) == nullptr) {
     return false;
@@ -27,8 +27,8 @@ bool EvaluationDataCollectorImpl::getDataSafe(const SlotId& slot_id, const std::
 }
 
 template<typename DataType>
-std::string EvaluationDataCollectorImpl::printData(const SlotId& slot_id,
-                                            const std::string& channel_name) const {
+std::string EvaluationDataCollectorImpl::printData(
+    const SlotId& slot_id, const std::string& channel_name) const {
   std::ostringstream out;
   const DataType* data;
   if (getDataSafe(slot_id, channel_name, &data)) {

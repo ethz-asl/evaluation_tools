@@ -17,8 +17,8 @@ class ChannelBase {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ChannelBase(const ChannelBase&) = delete;
   void operator=(const ChannelBase&) = delete;
-  ChannelBase() {}
-  virtual ~ChannelBase() {};
+  ChannelBase() = default;
+  virtual ~ChannelBase() = default;;
 };
 
 template<typename DataType>
@@ -26,9 +26,9 @@ class Channel : public ChannelBase {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef DataType Type;
-  Channel() {}
+  Channel() = default;
   Channel(const DataType& data) : value_(data) {}
-  virtual ~Channel() {}
+  virtual ~Channel() = default;
   const DataType value_;
 };
 
