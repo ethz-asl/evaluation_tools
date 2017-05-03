@@ -109,8 +109,8 @@ class EvaluationDataCollectorImpl {
   mutable std::mutex m_channel_groups_;
 };
 
-/// \class DummyVizDataCollector
-/// \brief A dummy class that has the visualization interface but does nothing.
+/// \class DummyEvaluationDataCollector
+/// \brief A dummy class that has the evaluation interface but does nothing.
 class EvaluationDataCollectorDummy {
  public:
   template<typename DataType> class PrintChannel;
@@ -179,7 +179,7 @@ class EvaluationDataCollectorDummy {
 
 /// \class PrintChannel
 /// \brief Helper to conveniently print channels that implement an operator<<
-/// \code LOG(INFO) << VizCollector::PrintChannel<size_t>(slot_id, "channel_name");
+/// \code LOG(INFO) << EvaluationDataCollector::PrintChannel<size_t>(slot_id, "channel_name");
 template<typename DataType>
 class EvaluationDataCollectorImpl::PrintChannel {
  public:
