@@ -10,7 +10,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <buildtool_depend>catkin_simple</buildtool_depend>
+  <depend>aslam_cv_common</depend>
   <depend>rospy</depend>
-
-  <export></export>
 </package>
