@@ -193,8 +193,8 @@ class EvaluationDataCollectorImpl::PrintChannel {
 
   inline friend std::ostream& operator<<(std::ostream& out,
                                          const PrintChannel<DataType>& channel) {
-    out << EvaluationDataCollectorImpl::Instance().printData<DataType>(channel.slot_id_,
-                                                                channel.channel_name_);
+    out << EvaluationDataCollectorImpl::Instance().printData<DataType>(
+        channel.slot_id_, channel.channel_name_);
     return out;
   }
  private:
