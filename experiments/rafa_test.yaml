@@ -1,9 +1,11 @@
 ## Global
 # Name
 experiment_name: dorb
+
 # Executable
 app_package_name: swe_app
 app_executable: swe_app
+
 # Calibration
 ncamera_calibration_file: Kermit/ncamera.yaml
 additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
@@ -11,22 +13,24 @@ additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
 ## Evaluation space
 # Parameters
 parameter_files:
- - orb_500.yaml
+ # - orb_500.yaml
  # - orb_800.yaml
- # - dorb_500.yaml
- # - dorb_800.yaml
+ # - orb_1500.yaml
+ - dorb_500.yaml
+ - dorb_800.yaml
+ # - dorb_1500.yaml
 
 # Datasets
 datasets:
 - name: 20161121_113921.bag
 
 # Custom runs
-custom_runs:
-  - dataset: 20161121_113921.bag
-    parameter_file: orb_500.yaml
-    repetitions: 3
-    parameters:
-      v: 2
+# custom_runs:
+#   - dataset: 20161121_113921.bag
+#     parameter_file: orb_500.yaml
+#     repetitions: 3
+#     parameters:
+#       v: 2
 
 ## Optional
 # Preprocessing scripts
@@ -43,8 +47,10 @@ perform_standard_evaluation: true
 
 # Whitelist
 whitelisted_metrics:
-  - keypoint tracking (1 image) in ms
+  # - keypoint tracking (1 image) in ms
 
 # Blacklist (only used if whitelist is empty)
 blacklisted_metrics:
   - swe-optimize_ num_variables
+  - swe-optimize_ final_error
+  - Twopt RANSAC (1 image) in ms

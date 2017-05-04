@@ -10,7 +10,7 @@ swe_use_pose_odometry: true
 swe_rosbag_filename: BAG_FILENAME
 swe_calibration_yaml: NCAM_CALIB_FILENAME
 swe_additional_odometry_yaml: ODOM_CALIB_FILENAME
-feature_detector_type: dorb
+feature_detector_type: orb
 feature_detector_orb_pyramid_levels: 3
 feature_detector_orb_num_features: 800
 feature_detector_use_nms: 1
@@ -21,6 +21,6 @@ gyro_noise_density: 1e-4
 gyro_bias_random_walk: 1e-4
 acc_noise_density: 4e-3
 acc_bias_random_walk: 4e-3
-swe_rosbag_start_s: 55
-swe_rosbag_end_s: 70
+swe_rosbag_start_s: 60
+swe_rosbag_end_s: 85
 swe_max_persistent_tracks_for_zero_velocity_update: 0

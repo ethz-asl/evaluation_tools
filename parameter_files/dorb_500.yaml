@@ -1,4 +1,4 @@
-v: 1
+v: 2
 gyro_lk_max_pyramid_levels: 3
 swe_nframe_timestamp_tolerance_nanoseconds: 15000000
 swe_datasource: 1
@@ -13,7 +13,8 @@ swe_additional_odometry_yaml: ODOM_CALIB_FILENAME
 feature_detector_type: dorb
 feature_detector_orb_pyramid_levels: 3
 feature_detector_orb_num_features: 500
-feature_detector_use_nms: 1
+aslam_cv_detector_dorb_num_features: 500
+feature_detector_use_nms: 0
 swe_visualization: 1
 swe_publish_pointcloud: 1
 feature_detector_orb_score_lower_bound: 0
@@ -21,6 +22,6 @@ gyro_noise_density: 1e-4
 gyro_bias_random_walk: 1e-4
 acc_noise_density: 4e-3
 acc_bias_random_walk: 4e-3
-swe_rosbag_start_s: 55
-swe_rosbag_end_s: 70
+swe_rosbag_start_s: 60
+swe_rosbag_end_s: 85
 swe_max_persistent_tracks_for_zero_velocity_update: 0

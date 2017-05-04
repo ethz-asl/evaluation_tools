@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from collections import defaultdict
+from collections import OrderedDict
 from math import sqrt
 import logging
 import matplotlib.patches as mpatches
@@ -64,7 +65,7 @@ class TestEvaluation(object):
         self.blacklist = blacklist
 
         # To create the bars later
-        self.colors = ['#69c6bf', '#97d7ce', '#b9ee98', '#d5f396', '#f0f79a', '#000000', \
+        self.colors = ['#69c6bf', '#97d7ce', '#b9ee98', '#d5f396', '#f0f79a', '#ffd993', '#ffc966', \
             '#111111', '#222222', '#333333', '#444444', '#555555', '#666666', '#777777' \
           , '#888888', '#999999', '#aaaaaa', '#bbbbbb', '#cccccc', '#dddddd', '#eeeeee', '#ffffff']
 
@@ -187,29 +188,32 @@ class TestEvaluation(object):
         return metrics_dict
 
 
-    def plotMetricsByParamset(self, metrics):
+    def plotMetricsByParamset(self, metrics_dict):
         plt.figure()
         turn = 0
         patches = []
 
-        for parameter_file, metrics in metrics.items():
+        ordered_metrics_dict = OrderedDict(sorted(metrics_dict.items()))
 
+        for parameter_file, metrics in ordered_metrics_dict.items():
+            # import ipdb; ipdb.set_trace()
             N = len(metrics)
-            ind = 1.3*np.arange(N) + 0.3*turn
+            ind = 1.3*np.arange(N) + 0.2*turn
 
             means = []
             stddevs = []
             for key in sorted(metrics):
+                # import ipdb; ipdb.set_trace()
                 means.append(metrics[key]["mean"])
                 stddevs.append(metrics[key]["stddev"])
 
-            plt.bar(ind, means, 0.3, color=self.colors[turn], yerr=stddevs)
+            plt.bar(ind, means, 0.2, color=self.colors[turn], yerr=stddevs)
 
             # plt.title('{}'.format(parameter_file), fontsize=14)
             plt.xlabel('Metric')
             plt.ylabel('Value')
             
-            plt.xticks(ind, sorted(metrics))
+            plt.xticks(ind - 0.1 * (len(ordered_metrics_dict) - 1), sorted(metrics))
             patches.append(mpatches.Patch(color=self.colors[turn], label=parameter_file))
             turn += 1
 
@@ -219,12 +223,14 @@ class TestEvaluation(object):
         plt.show()
 
 
-    def plotIndividualMetrics(self, metrics):
+    def plotIndividualMetrics(self, metrics_dict):
         plt.figure()
         turn = 0
         patches = []
 
-        for metric, occurrences in metrics.items():
+        ordered_metrics_dict = OrderedDict(sorted(metrics_dict.items()))
+
+        for metric, occurrences in ordered_metrics_dict.items():
 
             N = len(occurrences)
             ind = 1.3*np.arange(N) + 0.2*turn
@@ -241,7 +247,7 @@ class TestEvaluation(object):
             plt.xlabel('Parameter set')
             plt.ylabel('Value')
             
-            plt.xticks(ind, sorted(occurrences))
+            plt.xticks(ind - 0.1 * (len(ordered_metrics_dict) - 1), sorted(occurrences))
             patches.append(mpatches.Patch(color=self.colors[turn], label=metric))
             turn += 1
 
