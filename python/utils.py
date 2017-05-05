@@ -16,9 +16,12 @@ def checkParam(options, parameter_name, default_value):
                     + "' = "+str(default_value))
                     
 def userYesNoQuery(question):
-    sys.stdout.write('%s [y/n]\n' % question)
+    #sys.stdout.write('%s [y/n]\n' % question)
     while True:
-        try:
-          return strtobool(input().lower())
-        except ValueError:
-          sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
+      val = raw_input(question + " - Yes o No?\n").lower()
+      if val == 'y' or val == 'yes':
+        return True
+      elif val == 'n' or val == 'no':
+        return False
+      else:
+        sys.stdout.write('Please respond with \'y\' or \'n\'.\n')

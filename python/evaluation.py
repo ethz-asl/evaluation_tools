@@ -13,10 +13,11 @@ import IPython
 
 class Evaluation(object):
 
-    def __init__(self, job_dir):
+    def __init__(self, job_dir, root_folder):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.job_dir = job_dir
+        self.root_folder = root_folder
         
         job_filename = os.path.join(job_dir, 'job.yaml')
         if not os.path.isfile(job_filename):
@@ -32,15 +33,18 @@ class Evaluation(object):
         
     def runEvaluations(self):
         for evaluation in self.evaluation_scripts:
-            self.logger.info("=== Run Evaluation ===")            
-            eval_utils.assert_param(evaluation, "app_name")
-            eval_utils.assert_param(evaluation, "app_executable")            
+            self.logger.info("=== Run Evaluation ===")
+            if name not in evaluation:
+              raise Exception("Missing name tag")
+            evaluation_script = evaluation['name']
+            evaluation_script_with_path = self.root_folder + '/evaluation/' + evaluation_script
+            #os.system(evaluation_script_with_path)
             jp = Job()
-            jp.set_python_executable(evaluation["app_name"], evaluation["app_executable"])
-            jp.add_param("data_dir", self.job_dir)
-            if "parameters" in evaluation:
-                for key, value in evaluation["parameters"].items():
-                    jp.add_param(key, value)
+            jp.setPythonExecutable(evaluation_script_with_path)
+            jp.addParam("data_dir", self.job_dir)
+            #if "parameters" in evaluation:
+            #    for key, value in evaluation["parameters"].items():
+            #        jp.add_param(key, value)
             jp.execute()
 
 if __name__ == '__main__':

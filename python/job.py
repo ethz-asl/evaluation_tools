@@ -20,6 +20,10 @@ class Job(object):
     def setPythonExecutable(self, eval_app, executable):
         self.exec_app = eval_app
         self.exec_name = executable
+        
+    def setPythonExecutable(self, executable):
+        self.exec_app = None
+        self.exec_name = executable
           
     def loadConfigFromFolder(self, job_path):
         self.job_path = job_path
@@ -44,9 +48,13 @@ class Job(object):
     def _getCmdSeq(self):
         cmd_seq = []
         if self.exec_name.endswith('.py'):
+          if self.exec_app is None:
+            cmd_seq.append('python')
+          else:
             cmd_seq.append('rosrun')
             cmd_seq.append(self.exec_app)
-            cmd_seq.append(self.exec_name)
+            
+          cmd_seq.append(self.exec_name)
         else:
             if os.path.isfile(self.exec_path):
                 cmd_seq.append(self.exec_path)
@@ -62,6 +70,7 @@ class Job(object):
         cmd_string = ""
         for cmd in cmd_seq:
             cmd_string = cmd_string + cmd + " "
+        self.logger.info("Executing command: " + cmd_string)
         os.system(cmd_string)
         
     def writeSummary(self, filename):
