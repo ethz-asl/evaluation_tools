@@ -1,4 +1,4 @@
-## Global
+## Global parameters ##
 # Name
 experiment_name: dorb
 
@@ -10,34 +10,30 @@ app_executable: swe_app
 ncamera_calibration_file: Kermit/ncamera.yaml
 additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
 
-## Evaluation space
+## Evaluation space parameters ##
 # Parameters
 parameter_files:
  - orb_500.yaml
- # - orb_800.yaml
+ - orb_800.yaml
  # - orb_1500.yaml
- # - dorb_500.yaml
- # - dorb_800.yaml
+ - dorb_500.yaml
+ - dorb_800.yaml
  # - dorb_1500.yaml
 
 # Datasets
 datasets:
 - name: 20161121_113921.bag
 
-## Optional
+## Optional parameters ##
 # Preprocessing scripts
 preprocessing_scripts:
 
 # Evaluation scripts
 evaluation_scripts:
-  - name: prepare_statistics.py
 
-# In order to summarize_statistics, the format_statistics.py evaluation script
-# must be set. Comment these lines to disable summarization
+# If enabled, plots statistics
 summarize_statistics:
+  enabled: true
   whitelisted_metrics:
-    # - keypoint tracking (1 image) in ms
+    - keypoint tracking (1 image) in ms
   blacklisted_metrics:
-      - swe-optimize_ num_variables
-      - swe-optimize_ final_error
-      - Twopt RANSAC (1 image) in ms

@@ -2,7 +2,6 @@
 
 import logging
 import sys
-from distutils.util import strtobool
 
 def assertParam(options, parameter_name):
     if parameter_name not in options:
@@ -16,7 +15,6 @@ def checkParam(options, parameter_name, default_value):
                     + "' = "+str(default_value))
                     
 def userYesNoQuery(question):
-    #sys.stdout.write('%s [y/n]\n' % question)
     while True:
       val = raw_input(question + " - Yes o No?\n").lower()
       if val == 'y' or val == 'yes':

@@ -100,6 +100,17 @@ class Experiment(object):
         else:
             self.eval_dict['localization_map'] = ''
 
+        # Check if summarization is enabled
+        self.summarize_statistics = False
+        if 'summarize_statistics' in self.eval_dict:
+            if 'enabled' in self.eval_dict['summarize_statistics']:
+                if self.eval_dict['summarize_statistics']['enabled']:
+                    self.summarize_statistics = True
+                    # Summarization requires that each job runs the prepare_statistics.py script after execution
+                    if 'evaluation_scripts' not in self.eval_dict or self.eval_dict['evaluation_scripts'] is None:
+                        self.eval_dict['evaluation_scripts'] = []
+                    self.eval_dict['evaluation_scripts'].append({'name': 'prepare_statistics.py'})
+
         # Create set of datasets and download them if needed
         self.datasets = set()
         local_dataset_dir = datasets.getLocalDatasetsFolder()
@@ -153,6 +164,7 @@ class Experiment(object):
                     + os.path.basename(dataset).replace('.bag','') + '__' \
                     + parameter_file.replace('.yaml', ''))
                 self.job_paths.append(self._createJobFolder(params, str(dataset), str(parameter_file)))
+
         # Gather all parameters (from files, yaml, sweep, dataset specific)
         # and create the job folder.
         
@@ -203,7 +215,8 @@ class Experiment(object):
         # Replace variables in parameters:
         job_parameters = copy.deepcopy(parameters)
         job_parameters['log_dir'] = job_folder
-        job_parameters['swe_write_statistics_to_file'] = 1 # TODO make this an option
+        if self.summarize_statistics:
+            job_parameters['swe_write_statistics_to_file'] = 1
         for key, value in job_parameters.items():
             if isinstance(value, str):
                 value = value.replace('LOG_DIR', job_folder)
@@ -259,13 +272,13 @@ class Experiment(object):
             j.runEvaluations()
     
     def runSummarization(self):
-        if 'summarize_statistics' in self.eval_dict:
+        if self.summarize_statistics:
             whitelist = []
             blacklist = []
-            if 'whitelist' in self.eval_dict['summarize_statistics']:
-                whitelist = self.eval_dict['summarize_statistics']['whitelist']
-            if 'blacklist' in self.eval_dict['summarize_statistics']:
-                blacklist = self.eval_dict['summarize_statistics']['blacklist']
+            if 'whitelisted_metrics' in self.eval_dict['summarize_statistics']:
+                whitelist = self.eval_dict['summarize_statistics']['whitelisted_metrics']
+            if 'blacklisted_metrics' in self.eval_dict['summarize_statistics']:
+                blacklist = self.eval_dict['summarize_statistics']['blacklisted_metrics']
 
             files_to_summarize = []
             for job_path in self.job_paths:
@@ -311,5 +324,5 @@ if __name__ == '__main__':
     # Run each job and the evaluation of each job.
     e.runAndEvaluate()
 
-    # Run summarizations scripts
+    # Run summarizations
     e.runSummarization()

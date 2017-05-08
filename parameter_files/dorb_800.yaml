@@ -23,5 +23,5 @@ gyro_bias_random_walk: 1e-4
 acc_noise_density: 4e-3
 acc_bias_random_walk: 4e-3
 swe_rosbag_start_s: 60
-swe_rosbag_end_s: 85
+swe_rosbag_end_s: 70
 swe_max_persistent_tracks_for_zero_velocity_update: 0

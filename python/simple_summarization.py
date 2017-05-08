@@ -56,10 +56,10 @@ class Metric(object):
 
 class SimpleSummarization(object):
 
-    def __init__(self, evaluation_paths, whitelist = [], blacklist = []):
+    def __init__(self, files_to_summarize, whitelist = [], blacklist = []):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
-        self.evaluation_paths = evaluation_paths
+        self.files_to_summarize = files_to_summarize
         self.whitelist = whitelist
         self.blacklist = blacklist
 
@@ -74,7 +74,7 @@ class SimpleSummarization(object):
         self.metrics = defaultdict((dict))
 
         self.metrics = defaultdict(lambda: defaultdict(Metric))
-        for file in evaluation_paths:
+        for file in files_to_summarize:
             if not os.path.isfile(file):
                 raise ValueError("Output file does not exist: {}".format(file))
             statistics = yaml.safe_load(open(file))
@@ -85,6 +85,7 @@ class SimpleSummarization(object):
             parameter_file = statistics["parameter_file"]
             metrics = statistics["metrics"]
 
+            # Remove unwanted metrics
             if self.whitelist:
                 metrics = {key: metrics[key] for key in metrics if key in self.whitelist}
 
@@ -98,7 +99,7 @@ class SimpleSummarization(object):
                 self.metrics[(dataset, parameter_file)][metric].addSample(values)
 
         self.logger.info("Extracted data from {} runs, across {} datasets and {} parameter sets."
-                         "".format(len(self.evaluation_paths), len(self.datasets), len(self.parameter_files)))
+                         "".format(len(self.files_to_summarize), len(self.datasets), len(self.parameter_files)))
 
         # aaa = self.marginalizeDataset('test2.bag')
         # bbb = self.marginalizeParameterFile('parameter_file_1')
@@ -261,6 +262,6 @@ if __name__ == '__main__':
 
     import ipdb; ipdb.set_trace()
     # TODO add evaliuation paths as arg parameter
-    evaluation_paths=[]
+    files_to_summarize=[]
 
-    ev = SimpleSummarization(evaluation_paths)
+    ev = SimpleSummarization(files_to_summarize)
