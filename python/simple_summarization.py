@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from collections import defaultdict
 from collections import OrderedDict
 from math import sqrt

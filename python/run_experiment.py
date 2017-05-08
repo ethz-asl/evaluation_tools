@@ -156,53 +156,34 @@ class Experiment(object):
           
         # Create jobs for all dataset-parameter file combination.
         self.job_paths = []
-        for parameter_file in self.parameter_files:
-            filepath = self.root_folder + '/parameter_files/' + parameter_file
-            params = yaml.safe_load(open(filepath))
-            for dataset in self.datasets:
-                self.eval_dict['experiment_name'] = str(experiment_basename + '/' \
-                    + os.path.basename(dataset).replace('.bag','') + '__' \
-                    + parameter_file.replace('.yaml', ''))
-                self.job_paths.append(self._createJobFolder(params, str(dataset), str(parameter_file)))
+        for dataset in self.datasets:
+            for parameter_file in self.parameter_files:
+                filepath = self.root_folder + '/parameter_files/' + parameter_file
+                params = yaml.safe_load(open(filepath))
 
-        # Gather all parameters (from files, yaml, sweep, dataset specific)
-        # and create the job folder.
-        
+                if 'parameter_sweep' in params:
+                    p_name = params['parameter_sweep']["name"]
+                    p_min = params['parameter_sweep']["min"]
+                    p_max = params['parameter_sweep']["max"]
+                    p_step_size = params['parameter_sweep']["step_size"]
 
-        # parameters = {}
-        # if "parameter_files" in self.eval_dict:
-        #   for filename in self.eval_dict["parameter_files"]:
-        #     filepath = self.root_folder + '/parameter_files/' + filename
-        #     params = yaml.safe_load(open(filepath))
-        #     for key, value in params.items():
-        #       parameters[key] = value # ordering of files is important as we may overwrite parameters.
-                    
-        # if "parameters" in self.eval_dict and not self.eval_dict["parameters"] == None:
-        #   for key, value in self.eval_dict["parameters"].items():
-        #     parameters[key] = value
-                
-        # if "parameter_sweep" in self.eval_dict:
-        #   raise Exception("Currently not supported")
-
-
-          #self.logger.info("Generating parameter sweep jobs")
-          #param_sweep = self.eval_dict["parameter_sweep"]
-          #p_name = param_sweep["name"]
-          #p_min = param_sweep["min"]
-          #p_max = param_sweep["max"]
-          #p_num_steps = param_sweep["num_steps"]
-          
-          #for value in np.linspace(p_min, p_max, p_num_steps):
-          #    parameters[p_name] = float(value)
-          #    self.eval_dict['experiment_name'] = experiment_basename + \
-          #    '_' + dataset['name'] + '_' + dataset['instance'].replace('.bag','') + \
-          #    '_' + p_name + '=' + str(value) 
-          #    self.job_paths.append(self._create_job_folder(parameters, dataset['name']))
-            
-        # else:
-        #   self.eval_dict['experiment_name'] = str(experiment_basename + '_' \
-        #     + dataset_name.replace('.bag',''))
-        #   self.job_paths.append(self._createJobFolder(parameters, str(dataset_name)))
+                    step = 0
+                    max_steps = 100
+                    p_current = p_min
+                    while p_current <= p_max and step < max_steps:
+                        params[p_name] = p_current
+                        self.eval_dict['experiment_name'] = str(experiment_basename + '/' \
+                            + os.path.basename(dataset).replace('.bag','') + '__' \
+                            + parameter_file.replace('.yaml', '') + '__sweep_' + str(step))
+                        parameter_tag = str(parameter_file) + "_sweep_" + str(p_current)
+                        self.job_paths.append(self._createJobFolder(params, str(dataset), parameter_tag))
+                        p_current += p_step_size
+                        step += 1
+                else:
+                    self.eval_dict['experiment_name'] = str(experiment_basename + '/' \
+                        + os.path.basename(dataset).replace('.bag','') + '__' \
+                        + parameter_file.replace('.yaml', ''))
+                    self.job_paths.append(self._createJobFolder(params, str(dataset), str(parameter_file)))
                 
     def _createJobFolder(self, parameters, dataset_name, parameter_file):     
         job_folder = str(os.path.join(self.results_folder, self.eval_dict['experiment_name']))
@@ -215,8 +196,6 @@ class Experiment(object):
         # Replace variables in parameters:
         job_parameters = copy.deepcopy(parameters)
         job_parameters['log_dir'] = job_folder
-        if self.summarize_statistics:
-            job_parameters['swe_write_statistics_to_file'] = 1
         for key, value in job_parameters.items():
             if isinstance(value, str):
                 value = value.replace('LOG_DIR', job_folder)
@@ -226,6 +205,11 @@ class Experiment(object):
                 value = value.replace('MAP', self.eval_dict['localization_map'])
                 value = value.replace('OUTPUT_DIR', job_folder)
                 job_parameters[key] = value
+        # We do not want to pass parameter_sweep as an argument to the executable
+        if 'parameter_sweep' in job_parameters:
+            del job_parameters['parameter_sweep']
+        if self.summarize_statistics:
+            job_parameters['swe_write_statistics_to_file'] = 1
 
         # Write options to file.
         job_settings = copy.deepcopy(self.eval_dict)
@@ -291,24 +275,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logger.info('Experiment started')
-
-    local_data_folder_default = datasets.getLocalDatasetsFolder()
-    experiments_folder = catkin_utils.catkinFindSrc('evaluation_tools')
-    if experiments_folder:
-        input_folder_default = os.path.join(experiments_folder, 'experiments')        
-        output_folder_default = os.path.join(experiments_folder, 'results')
-    else:
-        input_folder_default = ''
-        output_folder_default = ''
     
     parser = argparse.ArgumentParser(description='''Experiment''')
     parser.add_argument('experiment_yaml_file', help='Experiment YAML file in input_folder')
-    #parser.add_argument('--input_folder', help='The path to the evaluation files',
-    #                    default=input_folder_default)
     parser.add_argument('--results_output_folder', help='The folder where to store results',
                         default=output_folder_default)
-    parser.add_argument('--data_folder', help='the path to the input data',
-                        default=local_data_folder_default)
     parser.add_argument('--automatic_download', action='store_true',
                         help='download dataset if it is not available locally')
     args = parser.parse_args()
