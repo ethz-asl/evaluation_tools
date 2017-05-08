@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-"""
-Zurich Eye
-"""
+#!/usr/bin/env python
 
 import os
 import yaml
@@ -10,21 +7,22 @@ import logging
 import catkin_utils
 import IPython
 
+
 class Job(object):
 
     def __init__(self):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.params_dict = {}
-        
+
     def setPythonExecutable(self, eval_app, executable):
         self.exec_app = eval_app
         self.exec_name = executable
-        
+
     def setPythonExecutable(self, executable):
         self.exec_app = None
         self.exec_name = executable
-          
+
     def loadConfigFromFolder(self, job_path):
         self.job_path = job_path
         self.logger = logging.getLogger(__name__)
@@ -92,6 +90,7 @@ class Job(object):
         out_file_stream = open(out_file_path, "w")
         yaml.dump(summary_dict, stream=out_file_stream, default_flow_style=False)
                 
+
 if __name__ == '__main__':
     
     logging.basicConfig(level=logging.DEBUG)

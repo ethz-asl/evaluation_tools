@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-"""
-Zurich Eye
-"""
+#!/usr/bin/env python
 
 import os
 import yaml
