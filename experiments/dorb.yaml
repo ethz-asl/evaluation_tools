@@ -26,21 +26,18 @@ datasets:
 
 ## Optional
 # Preprocessing scripts
-# preprocessing_scripts:
+preprocessing_scripts:
 
 # Evaluation scripts
 evaluation_scripts:
-  - name: format_statistics.py
+  - name: prepare_statistics.py
 
-# Standard evaluation
-# perform_standard_evaluation: true
-
-# Whitelist
-# whitelisted_metrics:
-  # - keypoint tracking (1 image) in ms
-
-# Blacklist (only used if whitelist is empty)
-# blacklisted_metrics:
-#   - swe-optimize_ num_variables
-#   - swe-optimize_ final_error
-#   - Twopt RANSAC (1 image) in ms
+# In order to summarize_statistics, the format_statistics.py evaluation script
+# must be set. Comment these lines to disable summarization
+summarize_statistics:
+  whitelisted_metrics:
+    # - keypoint tracking (1 image) in ms
+  blacklisted_metrics:
+      - swe-optimize_ num_variables
+      - swe-optimize_ final_error
+      - Twopt RANSAC (1 image) in ms

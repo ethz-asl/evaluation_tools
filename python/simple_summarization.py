@@ -2,6 +2,7 @@
 from collections import defaultdict
 from collections import OrderedDict
 from math import sqrt
+import argparse
 import logging
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -53,7 +54,7 @@ class Metric(object):
         self.count += other.count
 
 
-class SimpleEvaluation(object):
+class SimpleSummarization(object):
 
     def __init__(self, evaluation_paths, whitelist = [], blacklist = []):
         logging.basicConfig(level=logging.DEBUG)
@@ -252,9 +253,14 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
-    logger.info('Evaluation started')
+    logger.info('Summarization started')
     
+    parser = argparse.ArgumentParser(description="""Sumarization job""")
+    parser.add_argument('--files_to_summarize', help='test', default=[], action='append')
+    args = parser.parse_args()
+
+    import ipdb; ipdb.set_trace()
     # TODO add evaliuation paths as arg parameter
     evaluation_paths=[]
 
-    ev = SimpleEvaluation(evaluation_paths)
+    ev = SimpleSummarization(evaluation_paths)

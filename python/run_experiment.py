@@ -11,7 +11,7 @@ import numpy as np
 from job import Job
 from evaluation import Evaluation
 from preprocessing import Preprocessing
-from simple_evaluation import SimpleEvaluation
+from simple_summarization import SimpleSummarization
 import catkin_utils
 import utils as eval_utils
 import datasets
@@ -258,13 +258,20 @@ class Experiment(object):
             j = Evaluation(job_path, self.root_folder)            
             j.runEvaluations()
     
-    def runPostEvaluation(self):
-        evaluation_files = []
-        for job_path in self.job_paths:
-            evaluation_files.append(job_path + "/formatted_stats.yaml")
+    def runSummarization(self):
+        if 'summarize_statistics' in self.eval_dict:
+            whitelist = []
+            blacklist = []
+            if 'whitelist' in self.eval_dict['summarize_statistics']:
+                whitelist = self.eval_dict['summarize_statistics']['whitelist']
+            if 'blacklist' in self.eval_dict['summarize_statistics']:
+                blacklist = self.eval_dict['summarize_statistics']['blacklist']
 
-        j = SimpleEvaluation(evaluation_files)#, self.eval_dict["whitelisted_metrics"],
-            #self.eval_dict["blacklisted_metrics"])
+            files_to_summarize = []
+            for job_path in self.job_paths:
+                files_to_summarize.append(job_path + "/formatted_stats.yaml")
+
+            s = SimpleSummarization(files_to_summarize, whitelist, blacklist)
 
 if __name__ == '__main__':
     
@@ -304,5 +311,5 @@ if __name__ == '__main__':
     # Run each job and the evaluation of each job.
     e.runAndEvaluate()
 
-    # Run post evaluation
-    e.runPostEvaluation()
+    # Run summarizations scripts
+    e.runSummarization()
