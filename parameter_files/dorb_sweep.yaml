@@ -1,4 +1,4 @@
-v: 1
+v: 2
 gyro_lk_max_pyramid_levels: 3
 swe_nframe_timestamp_tolerance_nanoseconds: 15000000
 swe_datasource: 1
@@ -10,9 +10,9 @@ swe_use_pose_odometry: true
 swe_rosbag_filename: BAG_FILENAME
 swe_calibration_yaml: NCAM_CALIB_FILENAME
 swe_additional_odometry_yaml: WHEEL_ODO_CALIB_FILENAME
-feature_detector_type: orb
+feature_detector_type: dorb
 feature_detector_orb_pyramid_levels: 3
-feature_detector_orb_num_features: 800
+feature_detector_max_feature_count: 2000
 feature_detector_use_nms: 1
 swe_visualization: 1
 swe_publish_pointcloud: 1
@@ -21,6 +21,11 @@ gyro_noise_density: 1e-4
 gyro_bias_random_walk: 1e-4
 acc_noise_density: 4e-3
 acc_bias_random_walk: 4e-3
-swe_rosbag_start_s: 50
-swe_rosbag_end_s: 55
+swe_rosbag_start_s: 0
+swe_rosbag_end_s: 500
 swe_max_persistent_tracks_for_zero_velocity_update: 0
+parameter_sweep:
+  name: aslam_cv_detector_dorb_num_features
+  min: 500
+  max: 2000
+  step_size: 100

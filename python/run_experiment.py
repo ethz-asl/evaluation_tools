@@ -174,8 +174,8 @@ class Experiment(object):
                         params[p_name] = p_current
                         self.eval_dict['experiment_name'] = str(experiment_basename + '/' \
                             + os.path.basename(dataset).replace('.bag','') + '__' \
-                            + parameter_file.replace('.yaml', '') + '__sweep_' + str(step))
-                        parameter_tag = str(parameter_file) + "_sweep_" + str(p_current)
+                            + parameter_file.replace('.yaml', '') + '__SWEEP_' + str(step))
+                        parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
                         self.job_paths.append(self._createJobFolder(params, str(dataset), parameter_tag))
                         p_current += p_step_size
                         step += 1
@@ -269,17 +269,29 @@ class Experiment(object):
                 files_to_summarize.append(job_path + "/formatted_stats.yaml")
 
             s = SimpleSummarization(files_to_summarize, whitelist, blacklist)
+            s.runSummarization()
 
 if __name__ == '__main__':
     
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logger.info('Experiment started')
+
+    local_data_folder_default = datasets.getLocalDatasetsFolder()
+    experiments_folder = catkin_utils.catkinFindSrc('evaluation_tools')
+    if experiments_folder:
+        input_folder_default = os.path.join(experiments_folder, 'experiments')        
+        output_folder_default = os.path.join(experiments_folder, 'results')
+    else:
+        input_folder_default = ''
+        output_folder_default = ''
     
     parser = argparse.ArgumentParser(description='''Experiment''')
     parser.add_argument('experiment_yaml_file', help='Experiment YAML file in input_folder')
     parser.add_argument('--results_output_folder', help='The folder where to store results',
                         default=output_folder_default)
+    parser.add_argument('--data_folder', help='the path to the input data',
+                        default=local_data_folder_default)
     parser.add_argument('--automatic_download', action='store_true',
                         help='download dataset if it is not available locally')
     args = parser.parse_args()
