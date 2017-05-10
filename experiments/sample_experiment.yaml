@@ -1,6 +1,6 @@
 ## Global parameters ##
 # Name
-experiment_name: dorb
+experiment_name: sample_experiment
 
 # Executable
 app_package_name: swe_app
@@ -13,19 +13,13 @@ additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
 ## Evaluation space parameters ##
 # Parameters
 parameter_files:
- - orb_500.yaml
- # - orb_800.yaml
- # - orb_1500.yaml
- - dorb_500.yaml
- # - dorb_800.yaml
- # - dorb_1500.yaml
- - orb_sweep.yaml
- - dorb_sweep.yaml
+ - sample_parameters_1.yaml
+ - sample_parameters_2.yaml
+ - sample_parameters_with_sweep.yaml
 
 # Datasets
 datasets:
 - name: 20161121_113921.bag
-- name: 20161121_113921_2.bag
 
 ## Optional parameters ##
 # Preprocessing scripts
@@ -38,9 +32,8 @@ evaluation_scripts:
 summarize_statistics:
   enabled: true
   whitelisted_metrics:
-    - keypoint tracking (1 image) in ms
-    - non-maximum suppression (1 image) in ms
+    # - keypoint tracking (1 image) in ms
+    # - non-maximum suppression (1 image) in ms
   blacklisted_metrics:
     - swe-optimize_ num_variables
     - swe-optimize_ final_error
-    - Twopt RANSAC (1 image) in ms

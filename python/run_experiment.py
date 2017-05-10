@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
-import os
-import yaml
-import copy
-import time
-import shutil
-import logging
-import argparse
-import numpy as np
-from job import Job
 from evaluation import Evaluation
+from job import Job
 from preprocessing import Preprocessing
 from simple_summarization import SimpleSummarization
+import argparse
 import catkin_utils
-import utils as eval_utils
+import copy
 import datasets
 import IPython
+import logging
+import numpy as np
+import os
+import shutil
+import time
+import utils as eval_utils
+import yaml
 
 class Experiment(object):
     

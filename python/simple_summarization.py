@@ -328,5 +328,6 @@ if __name__ == '__main__':
     result_files = [args.results_folder + '/' + run_folder + '/formatted_stats.yaml'
                     for run_folder in os.listdir(args.results_folder)]
 
+    # TODO Read whitelist / blacklist from job and pass it here.
     ev = SimpleSummarization(result_files)
     ev.runSummarization()
