@@ -21,7 +21,7 @@ def alphanum_key(text):
     Calling mylist.sort(key=alphanum_key) sorts in human order
     Source: http://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
     '''
-    return [ atoi(c) for c in re.split('(\d+)', text) ]
+    return [atoi(c) for c in re.split('(\d+)', text)]
 
 
 class Metric(object):
@@ -55,12 +55,12 @@ class Metric(object):
         # TODO check the formulas
         elif other.count != 0:
             self.mean = (self.mean * self.count + other.mean * other.count) \
-                        / (self.count + other.count)
+                / (self.count + other.count)
 
-            self.var = ((self.count - 1) * self.var + (other.count - 1) * other.var \
-                       + (self.count * other.count) / (self.count + other.count) \
-                       * (self.mean * self.mean + other.mean * other.mean - 2 * self.mean * other.mean)) \
-                       / (self.count + other.count - 1)
+            self.var = ((self.count - 1) * self.var + (other.count - 1) * other.var
+                        + (self.count * other.count) / (self.count + other.count)
+                        * (self.mean * self.mean + other.mean * other.mean - 2 * self.mean * other.mean)) \
+                / (self.count + other.count - 1)
             self.stddev = sqrt(self.var)
 
             self.min = min(self.min, other.min)
@@ -72,9 +72,8 @@ class Metric(object):
 class Plotter(object):
 
     def __init__(self):
-        self.colors = ['#FCA17D', '#DA627D', '#9A348E', '#FAF3DD', '#69c6bf', '#97d7ce' \
-                     , '#6DAEDB', '#2892D7', '#3E78B2', '#1D70A2', '#1B998B', '#4FB286'\
-                     , '#b9ee98', '#d5f396', '#f0f79a', '#ffd993', '#ffc966']
+        self.colors = ['#FCA17D', '#DA627D', '#9A348E', '#FAF3DD', '#69c6bf', '#97d7ce', '#6DAEDB', '#2892D7',
+                       '#3E78B2', '#1D70A2', '#1B998B', '#4FB286', '#b9ee98', '#d5f396', '#f0f79a', '#ffd993', '#ffc966']
 
         self.Data = namedtuple("Data",
                                "label means stddevs mins maxes parameter_files")
@@ -90,7 +89,7 @@ class Plotter(object):
             # Find parameter sweeps captured in the metric
             parameter_sweep_files = set()
             for parameter_file in parameter_files:
-                if any(strip=='SWEEP' for strip in parameter_file.split('_')):
+                if any(strip == 'SWEEP' for strip in parameter_file.split('_')):
                     param_filename = parameter_file.split('_SWEEP_')[0]
                     parameter_sweep_files.add(param_filename)
 
@@ -101,20 +100,25 @@ class Plotter(object):
             sweep_data_dict = {}
             for parameter_sweep_file in parameter_sweep_files:
                 sweep_data_dict[parameter_sweep_file] = self.SweepData(label=metric,
-                    indices=[], means=[], stddevs=[], mins=[], maxes=[])
+                                                                       indices=[], means=[], stddevs=[], mins=[], maxes=[])
 
             # Fill in Plot Data object
             sorted_parameter_files = parameter_files.keys()
             sorted_parameter_files.sort(key=alphanum_key)
             for parameter_file in sorted_parameter_files:
                 # import ipdb;ipdb.set_trace()
-                if any(strip=='SWEEP' for strip in parameter_file.split('_')):
+                if any(strip == 'SWEEP' for strip in parameter_file.split('_')):
                     parameter_filename = parameter_file.split('_SWEEP_')[0]
-                    sweep_data_dict[parameter_filename].indices.append(parameter_file.split('_sweep_')[-1])
-                    sweep_data_dict[parameter_filename].means.append(parameter_files[parameter_file]["mean"])
-                    sweep_data_dict[parameter_filename].stddevs.append(parameter_files[parameter_file]["stddev"])
-                    sweep_data_dict[parameter_filename].mins.append(parameter_files[parameter_file]["min"])
-                    sweep_data_dict[parameter_filename].maxes.append(parameter_files[parameter_file]["max"])
+                    sweep_data_dict[parameter_filename].indices.append(
+                        parameter_file.split('_sweep_')[-1])
+                    sweep_data_dict[parameter_filename].means.append(
+                        parameter_files[parameter_file]["mean"])
+                    sweep_data_dict[parameter_filename].stddevs.append(
+                        parameter_files[parameter_file]["stddev"])
+                    sweep_data_dict[parameter_filename].mins.append(
+                        parameter_files[parameter_file]["min"])
+                    sweep_data_dict[parameter_filename].maxes.append(
+                        parameter_files[parameter_file]["max"])
 
                 else:
                     data_without_sweeps.means.append(parameter_files[parameter_file]["mean"])
@@ -123,8 +127,8 @@ class Plotter(object):
                     data_without_sweeps.maxes.append(parameter_files[parameter_file]["max"])
                     data_without_sweeps.parameter_files.append(parameter_file)
 
-            self.plotDataWithoutSweeps(data_without_sweeps)           
-            self.plotSweepsData(sweep_data_dict)           
+            self.plotDataWithoutSweeps(data_without_sweeps)
+            self.plotSweepsData(sweep_data_dict)
 
         plt.show()
 
@@ -144,14 +148,14 @@ class Plotter(object):
         barlist = plt.bar(ind, data.means, 1)
         plt.errorbar(ind+0.5, data.means, data.stddevs, fmt='o', ecolor='black', lw=3)
         plt.errorbar(ind+0.5, data.means, [data.mins, data.maxes], fmt='.', ecolor='black', lw=1)
-        for x,y in zip(ind, data.means): 
+        for x, y in zip(ind, data.means):
             plt.text(x+0.55, y*1.05, "{0:.2f}".format(y))
 
         for i in range(N):
             current_color = self.colors[i % len(self.colors)]
             barlist[i].set_color(current_color)
             patches.append(mpatches.Patch(color=current_color, label=data.parameter_files[i]))
-            
+
         max_y = plt.axis()[3]
 
         plt.xlim(-2, N + 2)
@@ -197,7 +201,7 @@ class Plotter(object):
 
 class SimpleSummarization(object):
 
-    def __init__(self, files_to_summarize, whitelist = [], blacklist = []):
+    def __init__(self, files_to_summarize, whitelist=[], blacklist=[]):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.files_to_summarize = files_to_summarize
@@ -217,7 +221,7 @@ class SimpleSummarization(object):
             statistics = yaml.safe_load(open(file))
             if not {'dataset', 'metrics', 'parameter_file'}.issubset(statistics.keys()):
                 raise ValueError('Malformed statistics file: {}'.format(file))
-            
+
             dataset = statistics["dataset"]
             parameter_file = statistics["parameter_file"]
             metrics = statistics["metrics"]
@@ -247,15 +251,17 @@ class SimpleSummarization(object):
         self.metrics_by_dataset = defaultdict(dict)
         for dataset in self.datasets:
             for parameter_file in self.parameter_files:
-                self.metrics_by_dataset[dataset][parameter_file] = self.metrics[(dataset, parameter_file)]
+                self.metrics_by_dataset[dataset][
+                    parameter_file] = self.metrics[(dataset, parameter_file)]
 
         self.metrics_by_parameter_file = defaultdict(dict)
         for parameter_file in self.parameter_files:
             for dataset in self.datasets:
-                self.metrics_by_parameter_file[parameter_file][dataset] = self.metrics[(dataset, parameter_file)]
+                self.metrics_by_parameter_file[parameter_file][
+                    dataset] = self.metrics[(dataset, parameter_file)]
 
     def summarizeMetricsFromDatasets(self, datasets='all'):
-        if datasets=='all':
+        if datasets == 'all':
             datasets = self.datasets
 
         merged_datasets = self.mergeDatasets(datasets)
@@ -290,9 +296,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logger.info('Summarization started')
-    
+
     parser = argparse.ArgumentParser(description="""Sumarization job""")
-    parser.add_argument('--results_folder', help='folder that contains all job folders', default="")
+    parser.add_argument('--results_folder',
+                        help='folder that contains all job folders', default="")
     args = parser.parse_args()
 
     if not os.path.isdir(args.results_folder):
