@@ -21,11 +21,11 @@ gyro_noise_density: 1e-4
 gyro_bias_random_walk: 1e-4
 acc_noise_density: 4e-3
 acc_bias_random_walk: 4e-3
-swe_rosbag_start_s: 0
-swe_rosbag_end_s: 500
+swe_rosbag_start_s: 50
+swe_rosbag_end_s: 55
 swe_max_persistent_tracks_for_zero_velocity_update: 0
 parameter_sweep:
   name: aslam_cv_detector_dorb_num_features
-  min: 500
-  max: 2000
-  step_size: 100
+  min: 300
+  max: 1800
+  step_size: 500

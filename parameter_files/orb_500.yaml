@@ -24,8 +24,3 @@ acc_bias_random_walk: 4e-3
 swe_rosbag_start_s: 50
 swe_rosbag_end_s: 55
 swe_max_persistent_tracks_for_zero_velocity_update: 0
-parameter_sweep:
-  name: feature_detector_orb_num_features
-  min: 400
-  max: 999
-  step_size: 100

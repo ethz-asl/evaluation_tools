@@ -17,14 +17,15 @@ def atoi(text):
 
 
 def alphanum_key(text):
-    '''
-    Calling mylist.sort(key=alphanum_key) sorts in human order
+    """Key used to sort strings in human order.
+
     Source: http://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
-    '''
+    """
     return [atoi(c) for c in re.split('(\d+)', text)]
 
 
 class Metric(object):
+    """Data Structure that stores some basic statistical properties."""
 
     def __init__(self):
         self.count = 0
@@ -34,7 +35,14 @@ class Metric(object):
         self.min = float('nan')
         self.max = float('nan')
 
-    def addSample(self, sample):
+    def addSampleFromDict(self, sample):
+        """Incorporate data from a sample that comes in dictionary form."""
+        if not isinstance(sample, dict):
+            raise TypeError("Sample is not a dictionary")
+
+        if not {'samples', 'mean', 'stddev', 'min', 'max'}.issubset(sample.keys()):
+            raise ValueError("Malformed sample")
+
         m = Metric()
         m.count = sample["samples"]
         m.mean = sample["mean"]
@@ -46,13 +54,14 @@ class Metric(object):
         self.mergeMetric(m)
 
     def mergeMetric(self, other):
+        """Incorporate data from another metric."""
         if self.count == 0:
             self.mean = other.mean
             self.var = other.var
             self.stddev = other.stddev
             self.min = other.min
             self.max = other.max
-        # TODO check the formulas
+
         elif other.count != 0:
             self.mean = (self.mean * self.count + other.mean * other.count) \
                 / (self.count + other.count)
@@ -70,6 +79,7 @@ class Metric(object):
 
 
 class Plotter(object):
+    """Plots the results from the summarization."""
 
     def __init__(self):
         self.colors = ['#FCA17D', '#DA627D', '#9A348E', '#FAF3DD', '#69c6bf', '#97d7ce', '#6DAEDB', '#2892D7',
@@ -82,35 +92,36 @@ class Plotter(object):
                                     "label means stddevs mins maxes indices")
 
     def plot(self, metrics):
-        self.plotIndividualMetrics(metrics)
+        """Main hook to plot metrics.
 
-    def plotIndividualMetrics(self, metrics):
+        Creates one Data namedtuple that contains the data from all runs, except those that come
+        from parameter sweeps, and one SweepData namedtuple for each parameter sweep. Then calls
+        the plotting functions for each Data and SweepData.
+        """
         for metric, parameter_files in metrics.items():
-            # Find parameter sweeps captured in the metric
+            # Find parameter sweeps captured in the metric.
             parameter_sweep_files = set()
             for parameter_file in parameter_files:
                 if any(strip == 'SWEEP' for strip in parameter_file.split('_')):
                     param_filename = parameter_file.split('_SWEEP_')[0]
                     parameter_sweep_files.add(param_filename)
 
-            # Create one Data object excluding results from parameter sweep runs, and
-            # one SweepData object for each different parameter sweep file.
+            # Create Data and SweepData instances.
             data_without_sweeps = self.Data(label=metric, means=[], stddevs=[], mins=[],
                                             maxes=[], parameter_files=[])
             sweep_data_dict = {}
             for parameter_sweep_file in parameter_sweep_files:
-                sweep_data_dict[parameter_sweep_file] = self.SweepData(label=metric,
-                                                                       indices=[], means=[], stddevs=[], mins=[], maxes=[])
+                sweep_data_dict[parameter_sweep_file] = self.SweepData(label=metric, indices=[],
+                                                                       means=[], stddevs=[], mins=[], maxes=[])
 
-            # Fill in Plot Data object
+            # Fill in Data and SweepData
             sorted_parameter_files = parameter_files.keys()
             sorted_parameter_files.sort(key=alphanum_key)
             for parameter_file in sorted_parameter_files:
-                # import ipdb;ipdb.set_trace()
                 if any(strip == 'SWEEP' for strip in parameter_file.split('_')):
                     parameter_filename = parameter_file.split('_SWEEP_')[0]
                     sweep_data_dict[parameter_filename].indices.append(
-                        parameter_file.split('_sweep_')[-1])
+                        parameter_file.split('_SWEEP_')[-1])
                     sweep_data_dict[parameter_filename].means.append(
                         parameter_files[parameter_file]["mean"])
                     sweep_data_dict[parameter_filename].stddevs.append(
@@ -133,9 +144,11 @@ class Plotter(object):
         plt.show()
 
     def plotDataWithoutSweeps(self, data):
+        """Creates and shows one bar plot with the input data."""
         if len(data.means) is 0:
             return
 
+        # Prepare the plot.
         patches = []
         plt.figure()
         plt.title('{}'.format(data.label), fontsize=14)
@@ -145,28 +158,29 @@ class Plotter(object):
         N = len(data.means)
         ind = np.arange(N)
 
+        # Plot the data, bars and text.
         barlist = plt.bar(ind, data.means, 1)
         plt.errorbar(ind+0.5, data.means, data.stddevs, fmt='o', ecolor='black', lw=3)
         plt.errorbar(ind+0.5, data.means, [data.mins, data.maxes], fmt='.', ecolor='black', lw=1)
         for x, y in zip(ind, data.means):
             plt.text(x+0.55, y*1.05, "{0:.2f}".format(y))
 
+        # Format the plot.
         for i in range(N):
             current_color = self.colors[i % len(self.colors)]
             barlist[i].set_color(current_color)
             patches.append(mpatches.Patch(color=current_color, label=data.parameter_files[i]))
 
         max_y = plt.axis()[3]
-
         plt.xlim(-2, N + 2)
         plt.ylim(-0.5 * max_y, 1.5 * max_y)
-
         plt.legend(handles=patches)
         plt.grid()
 
     def plotSweepsData(self, data):
+        """Creates one x-y plot for each SweepData inside data."""
         for param_file, sweep_data in data.items():
-
+            # Prepare the plot.
             indices = np.array(sweep_data.indices).astype(np.float64)
             means = np.array(sweep_data.means).astype(np.float64)
             maxes = np.array(sweep_data.maxes).astype(np.float64)
@@ -180,7 +194,7 @@ class Plotter(object):
             plt.xlabel('Value of parameter')
             plt.ylabel('Result')
 
-            # import ipdb; ipdb.set_trace()
+            # Plot the data.
             ax = plt.gca()
             ax.plot(indices, means, linestyle='-', lw=3, color="black")
             ax.plot(indices, maxes, linestyle=':', lw=2, color="grey")
@@ -191,6 +205,7 @@ class Plotter(object):
             ax.fill_between(indices, stddevs_sup, stddevs_inf, color="#9a0bad", alpha=0.2)
             ax.fill_between(indices, mins, maxes, color="gray", alpha=0.1)
 
+            # Format the plot.
             curr_axis = plt.axis()
             x_range = curr_axis[1] - curr_axis[0]
             y_range = curr_axis[3] - curr_axis[2]
@@ -200,6 +215,11 @@ class Plotter(object):
 
 
 class SimpleSummarization(object):
+    """Performs and plots a summarization of the jobs run in the experiment.
+
+    Reads information from the 'formated_stats.yaml' files available in each job
+    result folder, and summarizes and plots the data.
+    """
 
     def __init__(self, files_to_summarize, whitelist=[], blacklist=[]):
         logging.basicConfig(level=logging.DEBUG)
@@ -237,7 +257,7 @@ class SimpleSummarization(object):
             self.parameter_files.add(parameter_file)
 
             for metric, values in metrics.items():
-                self.metrics[(dataset, parameter_file)][metric].addSample(values)
+                self.metrics[(dataset, parameter_file)][metric].addSampleFromDict(values)
 
         self.createMetricsIndices()
         self.logger.info("Extracted data from {} runs, across {} datasets and {} parameter sets."

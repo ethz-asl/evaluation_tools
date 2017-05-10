@@ -13,14 +13,14 @@ additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
 ## Evaluation space parameters ##
 # Parameters
 parameter_files:
- # - orb_500.yaml
+ - orb_500.yaml
  # - orb_800.yaml
  # - orb_1500.yaml
- # - dorb_500.yaml
+ - dorb_500.yaml
  # - dorb_800.yaml
  # - dorb_1500.yaml
-  - orb_sweep.yaml
-  - dorb_sweep.yaml
+ - orb_sweep.yaml
+ - dorb_sweep.yaml
 
 # Datasets
 datasets:
