@@ -18,7 +18,7 @@ class EvaluationDataCollectorDummy;
 
 template<typename DataType> class Channel;
 
-#define ENABLE_DATA_COLLECTOR 1
+#define ENABLE_DATA_COLLECTOR
 
 #ifdef ENABLE_DATA_COLLECTOR
   typedef internal::EvaluationDataCollectorImpl EvaluationDataCollector;
@@ -109,8 +109,8 @@ class EvaluationDataCollectorImpl {
   mutable std::mutex m_channel_groups_;
 };
 
-/// \class DummyVizDataCollector
-/// \brief A dummy class that has the visualization interface but does nothing.
+/// \class DummyEvaluationDataCollector
+/// \brief A dummy class that has the evaluation interface but does nothing.
 class EvaluationDataCollectorDummy {
  public:
   template<typename DataType> class PrintChannel;
@@ -174,12 +174,13 @@ class EvaluationDataCollectorDummy {
     return false;
   }
   void removeSlotIfAvailable(const SlotId& /*slot_id*/) {}
+  void getAllSlotIds(std::unordered_set<SlotId>* slot_ids) const {}
   /// @}
 };
 
 /// \class PrintChannel
 /// \brief Helper to conveniently print channels that implement an operator<<
-/// \code LOG(INFO) << VizCollector::PrintChannel<size_t>(slot_id, "channel_name");
+/// \code LOG(INFO) << EvaluationDataCollector::PrintChannel<size_t>(slot_id, "channel_name");
 template<typename DataType>
 class EvaluationDataCollectorImpl::PrintChannel {
  public:
@@ -193,8 +194,8 @@ class EvaluationDataCollectorImpl::PrintChannel {
 
   inline friend std::ostream& operator<<(std::ostream& out,
                                          const PrintChannel<DataType>& channel) {
-    out << EvaluationDataCollectorImpl::Instance().printData<DataType>(channel.slot_id_,
-                                                                channel.channel_name_);
+    out << EvaluationDataCollectorImpl::Instance().printData<DataType>(
+        channel.slot_id_, channel.channel_name_);
     return out;
   }
  private:
