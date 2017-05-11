@@ -18,7 +18,7 @@ def checkParam(options, parameter_name, default_value):
 def userYesNoQuery(question):
     #sys.stdout.write('%s [y/n]\n' % question)
     while True:
-      val = raw_input(question + " - Yes o No?\n")
+      val = raw_input(question + " - Yes o No?\n").lower()
       if val == 'y' or val == 'yes':
         return True
       elif val == 'n' or val == 'no':

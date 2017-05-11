@@ -35,7 +35,7 @@ class Evaluation(object):
     def runEvaluations(self):
         for evaluation in self.evaluation_scripts:
             self.logger.info("=== Run Evaluation ===")
-            if not evaluation.has_key('name'):
+            if name not in evaluation:
               raise Exception("Missing name tag")
             evaluation_script = evaluation['name']
             evaluation_script_with_path = self.root_folder + '/evaluation/' + evaluation_script

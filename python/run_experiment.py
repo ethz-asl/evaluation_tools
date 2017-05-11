@@ -94,8 +94,8 @@ class Experiment(object):
                 available_datasets = datasets.getDatasetList()
                 downloaded_datasets, local_dataset_dir = datasets.getDownloadedDatasets()
               
-            # Get name of bagfile/csv.
-            self.eval_dict['dataset'] = str(os.path.join(local_dataset_dir, dataset['name']))
+          # Get name of bagfile/csv.
+          self.eval_dict['dataset'] = str(os.path.join(local_dataset_dir, dataset['name']))
             
           if os.path.isfile(self.eval_dict['dataset']):
               self.dataset_type = 'rosbag'
