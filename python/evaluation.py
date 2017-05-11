@@ -13,11 +13,12 @@ import IPython
 
 class Evaluation(object):
 
-    def __init__(self, job_dir, root_folder):
+    def __init__(self, job_dir, root_folder, localization_map = ''):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.job_dir = job_dir
         self.root_folder = root_folder
+        self.localization_map = localization_map
         
         job_filename = os.path.join(job_dir, 'job.yaml')
         if not os.path.isfile(job_filename):
@@ -42,6 +43,7 @@ class Evaluation(object):
             jp = Job()
             jp.setPythonExecutable(evaluation_script_with_path)
             jp.addParam("data_dir", self.job_dir)
+            jp.addParam("localization_map", self.localization_map)
             #if "parameters" in evaluation:
             #    for key, value in evaluation["parameters"].items():
             #        jp.add_param(key, value)
