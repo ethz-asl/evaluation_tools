@@ -8,7 +8,7 @@ app_executable: swe_app
 
 # Calibration
 ncamera_calibration_file: Kermit/ncamera.yaml
-additional_odometry_calibration_file: Kermit/wheel_odometry.yaml
+wheel_odometry_calibration_file: Kermit/wheel_odometry.yaml
 
 ## Evaluation space parameters ##
 # Parameters

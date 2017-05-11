@@ -13,15 +13,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="""Format a statistics file
         to be used in the standard evaluation.""")
-    parser.add_argument('--job_dir', help='directory of the job')
+    parser.add_argument('--data_dir', help='directory of the job')
     parser.add_argument('--dataset', help='dataset used in the job')
     parser.add_argument('--parameter_file', help='parameter file used in the job')
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
     
-    logger.info("Formatting statistics in {}".format(args.job_dir))
+    logger.info("Formatting statistics in {}".format(args.data_dir))
 
-    statistics_path = args.job_dir + '/statistics.yaml'
+    statistics_path = args.data_dir + '/statistics.yaml'
     if not os.path.isfile(statistics_path):
         raise ValueError('Could not open statistics file in {}'.format(statistics_path))
     statistics = yaml.safe_load(open(statistics_path))
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     formatted_stats['parameter_file'] = args.parameter_file
     formatted_stats['metrics'] = statistics
 
-    output_path = args.job_dir + '/formatted_stats.yaml'
+    output_path = args.data_dir + '/formatted_stats.yaml'
     logger.info("Formatting complete. New file in {}".format(output_path))
     out_file_stream = open(output_path, "w")
 
