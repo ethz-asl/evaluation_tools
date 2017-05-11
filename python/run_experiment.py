@@ -209,7 +209,7 @@ class Experiment(object):
             if isinstance(value, str):
                 value = value.replace('LOG_DIR', job_folder)
                 value = value.replace('NCAM_CALIB_FILENAME', self.eval_dict['ncamera_calibration_file'])
-                value = value.replace('WHEEL_ODO_CALIB_FILENAME', self.eval_dict['additional_odometry_calibration_file'])
+                value = value.replace('WHEEL_ODO_CALIB_FILENAME', self.eval_dict['wheel_odometry_calibration_file'])
                 value = value.replace('RT3K_CALIB_FILENAME', self.eval_dict['rt3k_calibration_file'])
                 value = value.replace('BAG_FILENAME', dataset_name)
                 value = value.replace('MAP', self.eval_dict['localization_map'])
