@@ -113,13 +113,21 @@ class Experiment(object):
             self.eval_dict['ncamera_calibration_file'] = ncamera_calibration_file
             self.logger.info("NCamera calibration file: " + ncamera_calibration_file)
 
-          if 'additional_odometry_calibration_file' in self.eval_dict.keys():
-            additional_odometry_calibration_file = str(self.root_folder + '/calibrations/' + self.eval_dict['additional_odometry_calibration_file'])
-            if not os.path.isfile(additional_odometry_calibration_file):
-              raise Exception('Unable to find additional odometry calibration file: ' + additional_odometry_calibration_file)
+          if 'wheel_odometry_calibration_file' in self.eval_dict.keys():
+            wheel_odometry_calibration_file = str(self.root_folder + '/calibrations/' + self.eval_dict['wheel_odometry_calibration_file'])
+            if not os.path.isfile(wheel_odometry_calibration_file):
+              raise Exception('Unable to find wheel-odometry calibration file: ' + wheel_odometry_calibration_file)
             
-            self.eval_dict['additional_odometry_calibration_file'] = additional_odometry_calibration_file
-            self.logger.info("Additional odometry calibration file: " + additional_odometry_calibration_file)
+            self.eval_dict['wheel_odometry_calibration_file'] = wheel_odometry_calibration_file
+            self.logger.info("Wheel-odometry calibration file: " + wheel_odometry_calibration_file)
+          
+          if 'rt3k_calibration_file' in self.eval_dict.keys():
+            rt3k_calibration_file = str(self.root_folder + '/calibrations/' + self.eval_dict['rt3k_calibration_file'])
+            if not os.path.isfile(rt3k_calibration_file):
+              raise Exception('Unable to find rt3k calibration file: ' + rt3k_calibration_file)
+            
+            self.eval_dict['rt3k_calibration_file'] = rt3k_calibration_file
+            self.logger.info("RT3K calibration file: " + rt3k_calibration_file)          
           
           # Find the map if there is any.
           if 'localization_map' in self.eval_dict.keys() and not self.eval_dict['localization_map'] == None and not self.eval_dict['localization_map'] == '':
@@ -183,7 +191,8 @@ class Experiment(object):
         if isinstance(value, str):
             value = value.replace('LOG_DIR', job_folder)
             value = value.replace('NCAM_CALIB_FILENAME', self.eval_dict['ncamera_calibration_file'])
-            value = value.replace('WHEEL_ODO_CALIB_FILENAME', self.eval_dict['additional_odometry_calibration_file'])
+            value = value.replace('WHEEL_ODO_CALIB_FILENAME', self.eval_dict['wheel_odometry_calibration_file'])
+            value = value.replace('RT3K_CALIB_FILENAME', self.eval_dict['rt3k_calibration_file'])
             value = value.replace('BAG_FILENAME', self.eval_dict['dataset'])
             value = value.replace('MAP', self.eval_dict['localization_map'])
             value = value.replace('OUTPUT_DIR', job_folder)
@@ -225,7 +234,7 @@ class Experiment(object):
             j.writeSummary("job_summary.yaml")
             
             self.logger.info("Run evaluation: " + job_path)
-            j = Evaluation(job_path, self.root_folder)            
+            j = Evaluation(job_path, self.root_folder, self.eval_dict['localization_map'])            
             j.runEvaluations()
           
 if __name__ == '__main__':
