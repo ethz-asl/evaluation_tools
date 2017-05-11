@@ -18,7 +18,7 @@ class EvaluationDataCollectorDummy;
 
 template<typename DataType> class Channel;
 
-#define ENABLE_DATA_COLLECTOR 1
+#define ENABLE_DATA_COLLECTOR
 
 #ifdef ENABLE_DATA_COLLECTOR
   typedef internal::EvaluationDataCollectorImpl EvaluationDataCollector;
@@ -174,6 +174,7 @@ class EvaluationDataCollectorDummy {
     return false;
   }
   void removeSlotIfAvailable(const SlotId& /*slot_id*/) {}
+  void getAllSlotIds(std::unordered_set<SlotId>* slot_ids) const {}
   /// @}
 };
 
