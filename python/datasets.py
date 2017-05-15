@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import re
 import os
@@ -7,7 +7,6 @@ import time
 import yaml
 import logging
 import tarfile
-#import urllib.request
 import urllib2
 import hashlib
 import argparse

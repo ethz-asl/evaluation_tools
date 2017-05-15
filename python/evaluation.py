@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-"""
-Zurich Eye
-"""
+#!/usr/bin/env python
 
 import os
 import yaml
@@ -13,12 +10,11 @@ import IPython
 
 class Evaluation(object):
 
-    def __init__(self, job_dir, root_folder, localization_map = ''):
+    def __init__(self, job_dir, root_folder):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.job_dir = job_dir
         self.root_folder = root_folder
-        self.localization_map = localization_map
         
         job_filename = os.path.join(job_dir, 'job.yaml')
         if not os.path.isfile(job_filename):
@@ -35,18 +31,19 @@ class Evaluation(object):
     def runEvaluations(self):
         for evaluation in self.evaluation_scripts:
             self.logger.info("=== Run Evaluation ===")
-            if name not in evaluation:
+            if 'name' not in evaluation:
               raise Exception("Missing name tag")
             evaluation_script = evaluation['name']
             evaluation_script_with_path = self.root_folder + '/evaluation/' + evaluation_script
-            #os.system(evaluation_script_with_path)
+
             jp = Job()
             jp.setPythonExecutable(evaluation_script_with_path)
             jp.addParam("data_dir", self.job_dir)
-            jp.addParam("localization_map", self.localization_map)
-            #if "parameters" in evaluation:
-            #    for key, value in evaluation["parameters"].items():
-            #        jp.add_param(key, value)
+            jp.addParam("localization_map", self.job["localization_map"])
+            if "parameter_file" in self.job:
+                jp.addParam("parameter_file", self.job["parameter_file"])
+            if "dataset" in self.job:
+                jp.addParam("dataset", self.job["dataset"])
             jp.execute()
 
 if __name__ == '__main__':

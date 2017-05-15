@@ -1,0 +1,39 @@
+## Global parameters ##
+# Name
+experiment_name: sample_experiment
+
+# Executable
+app_package_name: swe_app
+app_executable: swe_app
+
+# Calibration
+ncamera_calibration_file: Kermit/ncamera.yaml
+wheel_odometry_calibration_file: Kermit/wheel_odometry.yaml
+
+## Evaluation space parameters ##
+# Parameters
+parameter_files:
+ - sample_parameters_1.yaml
+ - sample_parameters_2.yaml
+ - sample_parameters_with_sweep.yaml
+
+# Datasets
+datasets:
+- name: 20161121_113921.bag
+
+## Optional parameters ##
+# Preprocessing scripts
+preprocessing_scripts:
+
+# Evaluation scripts
+evaluation_scripts:
+
+# If enabled, plots statistics
+summarize_statistics:
+  enabled: true
+  whitelisted_metrics:
+    # - keypoint tracking (1 image) in ms
+    # - non-maximum suppression (1 image) in ms
+  blacklisted_metrics:
+    - swe-optimize_ num_variables
+    - swe-optimize_ final_error
