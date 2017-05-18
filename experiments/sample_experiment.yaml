@@ -1,4 +1,4 @@
-## Global parameters ##
+## Global definitions ##
 # Name
 experiment_name: sample_experiment
 
@@ -10,7 +10,7 @@ app_executable: swe_app
 ncamera_calibration_file: Kermit/ncamera.yaml
 wheel_odometry_calibration_file: Kermit/wheel_odometry.yaml
 
-## Evaluation space parameters ##
+## Evaluation space definitions ##
 # Parameters
 parameter_files:
  - sample_parameters_1.yaml
@@ -21,19 +21,39 @@ parameter_files:
 datasets:
 - name: 20161121_113921.bag
 
-## Optional parameters ##
-# Preprocessing scripts
+## Optional definitions ##
+# [Optional] These parameters affect all runs and overwrite those inside the parameter files
+global_parameters:
+  swe_rosbag_filename: BAG_FILENAME
+  swe_calibration_yaml: NCAM_CALIB_FILENAME
+  swe_additional_odometry_yaml: WHEEL_ODO_CALIB_FILENAME
+
+# [Optional] Preprocessing scripts - run before execution of each job
 preprocessing_scripts:
 
-# Evaluation scripts
+# [Optional] Evaluation scripts - run after execution of each job
 evaluation_scripts:
 
-# If enabled, plots statistics
+# [Optional] If enabled, plots some statistics
 summarize_statistics:
+  # To disable summarization, either remove/comment the whole summarize_statistics
+  # entry, or change enabled to false
   enabled: true
+
+  # [Optional] If there are metrics listed here, all other will be ignored
   whitelisted_metrics:
     # - keypoint tracking (1 image) in ms
     # - non-maximum suppression (1 image) in ms
+
+  # [Optional] These metrics will be ignored
   blacklisted_metrics:
     - swe-optimize_ num_variables
     - swe-optimize_ final_error
+
+  # [Optional] This list of lists tells the plotter which sweep variables should be 
+  # grouped into a same plot. For example, if we sweep over two variables called
+  # n_rows and n_cols and we wanted to get one plot that shows the results from
+  # both sweeps, we would add the following:
+  group_sweeps:
+  - - n_rows
+    - n_cols
