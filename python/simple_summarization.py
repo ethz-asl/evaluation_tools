@@ -239,6 +239,11 @@ class Plotter(object):
         ax.fill_between(indices, stddevs_sup, stddevs_inf, color=self.sweep_colors_weak[0], alpha=0.2)
         ax.fill_between(indices, mins, maxes, color="gray", alpha=0.1)
 
+        max_idx = means.argmax()
+        ax.plot(indices[max_idx], means[max_idx], 'o', color="black")
+        min_idx = means.argin()
+        ax.plot(indices[min_idx], means[min_idx], 'o', color="black")
+
         # Format the plot.
         curr_axis = plt.axis()
         x_range = curr_axis[1] - curr_axis[0]
@@ -250,7 +255,7 @@ class Plotter(object):
     def plotMultipleSweeps(self, data):
         """Creates one x-y plot that combines multiple SweepDatas in data."""
         plt.figure()
-        color_index = 2
+        color_index = 1 #Skip 0 which is used in plotSingleSweep()
         patches = []
         variables = set()
         for parameter_file, sweep_data in data.items():
@@ -273,6 +278,11 @@ class Plotter(object):
             ax.plot(indices, stddevs_inf, linestyle='--', lw=2, color=weak_color)
 
             ax.fill_between(indices, stddevs_sup, stddevs_inf, color=weak_color, alpha=0.05)
+
+            max_idx = means.argmax()
+            ax.plot(indices[max_idx], means[max_idx], 'o', color="black")
+            min_idx = means.argmin()
+            ax.plot(indices[min_idx], means[min_idx], 'o', color="black")
 
             patches.append(mpatches.Patch(color=strong_color, label=parameter_file))
             color_index+=1
@@ -301,7 +311,7 @@ class SimpleSummarization(object):
     result folder, and summarizes and plots the data.
     """
 
-    def __init__(self, files_to_summarize, extra_parameters):
+    def __init__(self, files_to_summarize, extra_parameters={}):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
         self.files_to_summarize = files_to_summarize
@@ -419,6 +429,20 @@ if __name__ == '__main__':
     result_files = [args.results_folder + '/' + job_folder + '/formatted_stats.yaml'
                     for job_folder in os.listdir(args.results_folder)]
 
-    # TODO Read whitelist / blacklist from job and pass it here.
-    ev = SimpleSummarization(result_files)
+    # Retreive summarization configuration from the experiment
+    config_probe_file = args.results_folder + '/' + os.listdir(args.results_folder)[0] + '/job.yaml'
+    if not os.path.isfile(config_probe_file):
+        raise ValueError("Could not get summarization configuration from: {}".format(config_probe_file))
+    config = yaml.safe_load(open(config_probe_file))
+
+    extra_parameters = {}
+    if 'summarize_statistics' in config:
+        if 'blacklisted_metrics' in config['summarize_statistics']:
+            extra_parameters['blacklist'] = config['summarize_statistics']['blacklisted_metrics']
+        if 'group_sweeps' in config['summarize_statistics']:
+            extra_parameters['group_sweeps'] = config['summarize_statistics']['group_sweeps']
+        if 'whitelisted_metrics' in config['summarize_statistics']:
+            extra_parameters['whitelist'] = config['summarize_statistics']['whitelisted_metrics']
+
+    ev = SimpleSummarization(result_files, extra_parameters)
     ev.runSummarization()
