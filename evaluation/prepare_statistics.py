@@ -16,6 +16,8 @@ if __name__ == '__main__':
     parser.add_argument('--data_dir', help='directory of the job')
     parser.add_argument('--dataset', help='dataset used in the job')
     parser.add_argument('--parameter_file', help='parameter file used in the job')
+    parser.add_argument('--parameter_sweep', help='name of the parameter that was swept'
+                        'if parameter sweep was enabled', default=None)
 
     args, unknown = parser.parse_known_args()
     
@@ -30,6 +32,8 @@ if __name__ == '__main__':
     formatted_stats['dataset'] = args.dataset
     formatted_stats['parameter_file'] = args.parameter_file
     formatted_stats['metrics'] = statistics
+    if args.parameter_sweep is not None:
+        formatted_stats['parameter_sweep'] = args.parameter_sweep
 
     output_path = args.data_dir + '/formatted_stats.yaml'
     logger.info("Formatting complete. New file in {}".format(output_path))

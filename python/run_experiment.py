@@ -4,6 +4,7 @@ from evaluation import Evaluation
 from job import Job
 from preprocessing import Preprocessing
 from simple_summarization import SimpleSummarization
+from collections import defaultdict
 import argparse
 import catkin_utils
 import copy
@@ -183,6 +184,11 @@ class Experiment(object):
                 filepath = self.root_folder + '/parameter_files/' + parameter_file
                 params = yaml.safe_load(open(filepath))
 
+                # Global parameters overwrite the ones in parameter_files
+                if 'global_parameters' in self.eval_dict and self.eval_dict['global_parameters'] is not None:
+                    for param, value in self.eval_dict['global_parameters'].items():
+                        params[param] = value
+
                 if 'parameter_sweep' in params:
                     p_name = params['parameter_sweep']["name"]
                     p_min = params['parameter_sweep']["min"]
@@ -220,6 +226,7 @@ class Experiment(object):
             self.logger.info("Job folder already exists '{}'".format(job_folder))
 
         # Replace variables in parameters:
+        job_settings = copy.deepcopy(self.eval_dict)
         job_parameters = copy.deepcopy(parameters)
         job_parameters['log_dir'] = job_folder
         for key, value in job_parameters.items():
@@ -234,12 +241,12 @@ class Experiment(object):
                 job_parameters[key] = value
         # We do not want to pass parameter_sweep as an argument to the executable
         if 'parameter_sweep' in job_parameters:
+            job_settings['parameter_sweep'] = job_parameters['parameter_sweep']['name']
             del job_parameters['parameter_sweep']
         if self.summarize_statistics:
             job_parameters['swe_write_statistics_to_file'] = 1
 
         # Write options to file.
-        job_settings = copy.deepcopy(self.eval_dict)
         job_settings['parameter_file'] = parameter_file
         job_settings['dataset'] = dataset_name
         job_settings['parameters'] = job_parameters
@@ -284,18 +291,19 @@ class Experiment(object):
 
     def runSummarization(self):
         if self.summarize_statistics:
-            whitelist = []
-            blacklist = []
+            extra_parameters = defaultdict(list)
             if 'whitelisted_metrics' in self.eval_dict['summarize_statistics']:
-                whitelist = self.eval_dict['summarize_statistics']['whitelisted_metrics']
+                extra_parameters['whitelist'] = self.eval_dict['summarize_statistics']['whitelisted_metrics']
             if 'blacklisted_metrics' in self.eval_dict['summarize_statistics']:
-                blacklist = self.eval_dict['summarize_statistics']['blacklisted_metrics']
+                extra_parameters['blacklist'] = self.eval_dict['summarize_statistics']['blacklisted_metrics']
+            if 'group_sweeps' in self.eval_dict['summarize_statistics']:
+                extra_parameters['group_sweeps'] = self.eval_dict['summarize_statistics']['group_sweeps']
 
             files_to_summarize = []
             for job_path in self.job_paths:
                 files_to_summarize.append(job_path + "/formatted_stats.yaml")
 
-            s = SimpleSummarization(files_to_summarize, whitelist, blacklist)
+            s = SimpleSummarization(files_to_summarize, extra_parameters)
             s.runSummarization()
 
 if __name__ == '__main__':

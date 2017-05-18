@@ -44,6 +44,8 @@ class Evaluation(object):
                 jp.addParam("parameter_file", self.job["parameter_file"])
             if "dataset" in self.job:
                 jp.addParam("dataset", self.job["dataset"])
+            if "parameter_sweep" in self.job:
+                jp.addParam("parameter_sweep", self.job["parameter_sweep"])
             jp.execute()
 
 if __name__ == '__main__':
