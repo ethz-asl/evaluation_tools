@@ -2,6 +2,7 @@
 
 from collections import defaultdict, OrderedDict, namedtuple
 from math import sqrt
+import catkin_utils
 import argparse
 import logging
 import matplotlib.patches as mpatches
@@ -420,17 +421,26 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="""Sumarization job""")
     parser.add_argument('--results_folder',
-                        help='folder that contains all job folders', default="")
+                        help='folder that contains all job folders', default="last")
     args = parser.parse_args()
+    results_folder = args.results_folder
+    if results_folder is "last":
+        results_root_folder = catkin_utils.catkinFindSrc("evaluation_tools") + "/results/"
+        if not os.path.isdir(results_root_folder):
+            raise ValueError("Could not find results for last experiment")
+        all_results = [os.path.join(results_root_folder, result) for result in os.listdir(results_root_folder)
+                       if os.path.isdir(os.path.join(results_root_folder, result))]
+        all_results.sort(key=alphanum_key)
+        results_folder = all_results[-1]
 
-    if not os.path.isdir(args.results_folder):
+    if not os.path.isdir(results_folder):
         logger.error("Failed to open results folder")
 
-    result_files = [args.results_folder + '/' + job_folder + '/formatted_stats.yaml'
-                    for job_folder in os.listdir(args.results_folder)]
+    result_files = [results_folder + '/' + job_folder + '/formatted_stats.yaml'
+                    for job_folder in os.listdir(results_folder)]
 
     # Retreive summarization configuration from the experiment
-    config_probe_file = args.results_folder + '/' + os.listdir(args.results_folder)[0] + '/job.yaml'
+    config_probe_file = results_folder + '/' + os.listdir(results_folder)[0] + '/job.yaml'
     if not os.path.isfile(config_probe_file):
         raise ValueError("Could not get summarization configuration from: {}".format(config_probe_file))
     config = yaml.safe_load(open(config_probe_file))
