@@ -28,12 +28,12 @@ There are many examples on how to use these statistics around the codebase (like
 Let's suppose that we want to evaluate how different parameters affect how big a reprojection error gets. For convenience, let's assume that there is a function called `computeReprojectionError()` that returns a float.
 
 Then, somewhere in the code, we would already have:
-```
+```cpp
 double reprojection_error = computeReprojectionError();
 ```
 
 In order to add this as a statistics, one would simply enclose the previous code with the following:
-```
+```cpp
 statistics::StatsCollector stat_repr_error("reprojection_error");
 double reprojection_error = computeReprojectionError();
 stat_repr_error.AddSample(reprojection_error);
@@ -68,7 +68,7 @@ An experiments yaml file must contain the following fields:
 
 ### 2.2 Running the experiment
 Once the experiments yaml file is created, the user has to run the `python/run_experiment.py` script, specifying which experiment file to use as an argument, as in:
-```
+```bash
 roscd evaluation_tools
 python/run_experiment.py sample_experiment.yaml
 ```
