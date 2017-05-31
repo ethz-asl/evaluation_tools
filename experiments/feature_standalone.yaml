@@ -13,10 +13,10 @@ wheel_odometry_calibration_file: Kermit/wheel_odometry.yaml
 ## Evaluation space parameters ##
 # Parameters
 parameter_files:
- - orb.yaml
- - dorb.yaml
- # - dorb-sweep.yaml
- # - orb-sweep.yaml
+ # - orb.yaml
+ # - dorb.yaml
+ - dorb-sweep.yaml
+ - orb-sweep.yaml
 
 # These parameters affect all run and overwrite those inside the parameter files
 global_parameters:
@@ -29,8 +29,8 @@ global_parameters:
   feature_detector_orb_num_features: 800
   feature_detector_orb_pyramid_levels: 3
   good_match_dist_threshold: 50
-  feature_tracking_evaluation_samples_folder: samples_4
-  show_stuff: true
+  feature_tracking_evaluation_samples_folder: samples_8
+  # show_stuff: true
 
 # Datasets
 datasets:

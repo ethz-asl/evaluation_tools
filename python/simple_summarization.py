@@ -241,7 +241,7 @@ class Plotter(object):
 
         max_idx = means.argmax()
         ax.plot(indices[max_idx], means[max_idx], 'o', color="black")
-        min_idx = means.argin()
+        min_idx = means.argmin()
         ax.plot(indices[min_idx], means[min_idx], 'o', color="black")
 
         # Format the plot.
