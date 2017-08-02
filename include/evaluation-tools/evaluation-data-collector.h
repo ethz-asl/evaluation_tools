@@ -18,7 +18,7 @@ class EvaluationDataCollectorDummy;
 
 template<typename DataType> class Channel;
 
-#define ENABLE_DATA_COLLECTOR
+#undef ENABLE_DATA_COLLECTOR
 
 #ifdef ENABLE_DATA_COLLECTOR
   typedef internal::EvaluationDataCollectorImpl EvaluationDataCollector;
