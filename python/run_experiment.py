@@ -73,41 +73,15 @@ class Experiment(object):
             experiment_basename = self.eval_dict['experiment_generated_time'] \
                 + '_' + self.eval_dict["experiment_name"]
 
-        # Find calibration file:
-        if 'ncamera_calibration_file' in self.eval_dict.keys():
-            ncamera_calibration_file = str(
-                self.root_folder + '/calibrations/' + self.eval_dict['ncamera_calibration_file'])
-            if not os.path.isfile(ncamera_calibration_file):
-                raise Exception('Unable to find ncamera calibration file: ' +
-                                ncamera_calibration_file)
-
-            self.eval_dict['ncamera_calibration_file'] = ncamera_calibration_file
-            self.logger.info("NCamera calibration file: " + ncamera_calibration_file)
-        else:
-            self.eval_dict['ncamera_calibration_file'] = ''
-
-        if 'wheel_odometry_calibration_file' in self.eval_dict.keys():
-            wheel_odometry_calibration_file = str(
-                self.root_folder + '/calibrations/' + self.eval_dict['wheel_odometry_calibration_file'])
-            if not os.path.isfile(wheel_odometry_calibration_file):
-                raise Exception('Unable to find wheel-odometry calibration file: ' +
-                                wheel_odometry_calibration_file)
-
-            self.eval_dict['wheel_odometry_calibration_file'] = wheel_odometry_calibration_file
-            self.logger.info("Wheel-odometry calibration file: " + wheel_odometry_calibration_file)
-        else:
-            self.eval_dict['wheel_odometry_calibration_file'] = ''
-
-        if 'rt3k_calibration_file' in self.eval_dict.keys():
-            rt3k_calibration_file = str(
-                self.root_folder + '/calibrations/' + self.eval_dict['rt3k_calibration_file'])
-            if not os.path.isfile(rt3k_calibration_file):
-                raise Exception('Unable to find rt3k calibration file: ' + rt3k_calibration_file)
-
-            self.eval_dict['rt3k_calibration_file'] = rt3k_calibration_file
-            self.logger.info("RT3K calibration file: " + rt3k_calibration_file)
-        else:
-            self.eval_dict['rt3k_calibration_file'] = ''
+        # Find sensors file:
+        sensors_file = ''
+        if 'sensors_file' in self.eval_dict.keys():
+            sensors_file = str(
+                self.root_folder + '/calibrations/' + self.eval_dict['sensors_file'])     
+        if not os.path.isfile(sensors_file):
+            raise Exception('Unable to find the sensors calibration file. Make sure in your experiments YAML there is a valid "sensors_file" specified. It is expected to be located in the calibration folder: ' + self.root_folder + '/calibrations')
+        self.eval_dict['sensors_file'] = sensors_file
+        self.logger.info("Using sensors file: " + sensors_file)
 
         # Find the map if there is any.
         if 'localization_map' in self.eval_dict.keys() and not self.eval_dict['localization_map'] == None and not self.eval_dict['localization_map'] == '':
@@ -225,9 +199,7 @@ class Experiment(object):
         for key, value in job_parameters.items():
             if isinstance(value, str):
                 value = value.replace('LOG_DIR', job_folder)
-                value = value.replace('NCAM_CALIB_FILENAME', self.eval_dict['ncamera_calibration_file'])
-                value = value.replace('WHEEL_ODO_CALIB_FILENAME', self.eval_dict['wheel_odometry_calibration_file'])
-                value = value.replace('RT3K_CALIB_FILENAME', self.eval_dict['rt3k_calibration_file'])
+                value = value.replace('SENSORS_YAML', self.eval_dict['sensors_file'])
                 value = value.replace('BAG_FILENAME', dataset_name)
                 value = value.replace('MAP', self.eval_dict['localization_map'])
                 value = value.replace('OUTPUT_DIR', job_folder)
