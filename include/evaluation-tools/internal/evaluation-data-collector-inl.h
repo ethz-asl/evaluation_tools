@@ -8,12 +8,16 @@
 namespace evaluation {
 namespace internal {
 
+
 template<typename DataType>
 void EvaluationDataCollectorImpl::pushData(
     const SlotId& slot_id, const std::string& channel_name, const DataType& data) {
   ChannelGroup* slot = getSlotAndCreateIfNecessary(slot_id);
   CHECK_NOTNULL(slot);
   slot->setChannel(channel_name, data);
+
+  DiagnosticMessageWrapper<DataType, std::is_arithmetic<DataType>::value>(
+      slot_id, channel_name, data, &diagnostic_publisher_);
 }
 
 template<typename DataType>

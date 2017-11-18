@@ -6,7 +6,9 @@
 #include <unordered_map>
 
 #include <aslam/common/unique-id.h>
+#include <diagnostic_updater/diagnostic_updater.h>
 #include <Eigen/Core>
+#include <ros/ros.h>
 
 #include "evaluation-tools/internal/channel.h"
 
@@ -18,7 +20,7 @@ class EvaluationDataCollectorDummy;
 
 template<typename DataType> class Channel;
 
-#undef ENABLE_DATA_COLLECTOR
+#define ENABLE_DATA_COLLECTOR
 
 #ifdef ENABLE_DATA_COLLECTOR
   typedef internal::EvaluationDataCollectorImpl EvaluationDataCollector;
@@ -39,9 +41,60 @@ class EvaluationDataCollectorImpl {
   template<typename DataType> class PrintCommonChannel;
  private:
   // Singleton class.
-  EvaluationDataCollectorImpl() = default;
+  EvaluationDataCollectorImpl() {
+    // Initialize ROS, if the host process doesn't initialize it itself.
+    if (ros::isInitialized()) {
+      VLOG(20) << "ROS is already initialized.";
+    } else {
+      int argv = 0;
+      const std::string kNodeName = "evaluation_data_collector";
+      ros::init(argv, nullptr, kNodeName);
+    }
+
+    node_handle_.reset(new ros::NodeHandle());
+    const uint32_t kQueueSize = 1u;
+    diagnostic_publisher_ =
+        node_handle_->advertise<diagnostic_msgs::DiagnosticArray>(
+            "/diagnostics", kQueueSize);
+
+    //updater_.setHardwareID("evaluation_data_collector");
+    //updater_.add(
+    //    "test", this, &EvaluationDataCollectorImpl::produceDiagnostics);
+  }
   EvaluationDataCollectorImpl(const EvaluationDataCollectorImpl&) = delete;
   virtual ~EvaluationDataCollectorImpl() = default;
+
+  template<class DataType, bool>
+  struct DiagnosticMessageWrapper final {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    DiagnosticMessageWrapper() = delete;
+  };
+
+  template<class DataType>
+  struct DiagnosticMessageWrapper<DataType, true> {
+    DiagnosticMessageWrapper(
+        const SlotId& slot_id, const std::string& channel_name,
+        const DataType& data_type, ros::Publisher* publisher) {
+      CHECK_NOTNULL(publisher);
+
+      diagnostic_msgs::DiagnosticStatus status;
+      status.name = channel_name;
+      status.hardware_id = "some_hardware_id";
+      status.level = diagnostic_msgs::DiagnosticStatus::OK;
+      status.message = std::to_string(data_type);
+      diagnostic_msgs::DiagnosticArray msg;
+      msg.status.emplace_back(status);
+      msg.header.stamp = ros::Time::now(); // Add timestamp for ROS 0.10
+      publisher->publish(msg);
+    }
+  };
+
+  template<class DataType>
+  struct DiagnosticMessageWrapper<DataType, false> {
+    DiagnosticMessageWrapper(
+        const SlotId& slot_id, const std::string& channel_name,
+        const DataType& data_type, ros::Publisher* publisher) {}
+  };
 
  public:
   static EvaluationDataCollectorImpl& Instance() {
@@ -61,6 +114,8 @@ class EvaluationDataCollectorImpl {
   /// Methods to store and access data indexed by a SlotId.
   template<typename DataType>
   void pushData(const SlotId& slot_id, const std::string& channel_name, const DataType& data);
+  template<bool B>
+  void foo();
   template<typename DataType>
   bool getDataSafe(const SlotId& slot_id, const std::string& channel_name,
                    const DataType** data) const;
@@ -98,6 +153,12 @@ class EvaluationDataCollectorImpl {
   ChannelGroup* getSlot(const SlotId& slot_id);
   const ChannelGroup* getSlot(const SlotId& slot_id) const;
   ChannelGroup* getSlotAndCreateIfNecessary(const SlotId& slot_id);
+
+  void produceDiagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
+    stat.name = "velodyne";
+    stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "This is a silly updater.");
+    stat.add("Stupidicity of this updater", 1000.);
+  }
   /// @}
 
  protected:
@@ -107,6 +168,11 @@ class EvaluationDataCollectorImpl {
   typedef std::unordered_map<SlotId, ChannelGroup> SlotIdSlotMap;
   SlotIdSlotMap channel_groups_;
   mutable std::mutex m_channel_groups_;
+
+  //diagnostic_updater::Updater updater_;
+
+  std::unique_ptr<ros::NodeHandle> node_handle_;
+  ros::Publisher diagnostic_publisher_;
 };
 
 /// \class DummyEvaluationDataCollector

@@ -6,7 +6,9 @@
 #include <unordered_map>
 
 #include <aslam/common/unique-id.h>
+#include <diagnostic_updater/publisher.h>
 #include <Eigen/Core>
+#include <std_msgs/Bool.h>
 
 namespace evaluation {
 namespace internal {
@@ -72,8 +74,20 @@ void EvaluationDataCollectorImpl::getAllSlotIds(std::unordered_set<SlotId>* slot
 
   slot_ids->reserve(channel_groups_.size());
   for (const SlotIdSlotMap::value_type& slot_id_with_channel_group : channel_groups_) {
-    slot_ids->emplace(slot_id_with_channel_group.first);
+    if (slot_id_with_channel_group.first != kCommonSlotId) {
+      slot_ids->emplace(slot_id_with_channel_group.first);
+    }
   }
+}
+
+template<>
+void EvaluationDataCollectorImpl::foo<true>() {
+
+}
+
+template<>
+void EvaluationDataCollectorImpl::foo<false>() {
+
 }
 
 }  // namespace internal
