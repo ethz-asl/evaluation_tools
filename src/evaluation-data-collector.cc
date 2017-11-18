@@ -66,13 +66,17 @@ bool EvaluationDataCollectorImpl::hasChannel(const SlotId& slot_id,
   return slot->hasChannel(channel_name);
 }
 
-void EvaluationDataCollectorImpl::getAllSlotIds(std::unordered_set<SlotId>* slot_ids) const {
+void EvaluationDataCollectorImpl::getAllSlotIds(
+    std::unordered_set<SlotId>* slot_ids) const {
   CHECK_NOTNULL(slot_ids)->clear();
   std::lock_guard<std::mutex> lock(m_channel_groups_);
 
   slot_ids->reserve(channel_groups_.size());
-  for (const SlotIdSlotMap::value_type& slot_id_with_channel_group : channel_groups_) {
-    slot_ids->emplace(slot_id_with_channel_group.first);
+  for (const SlotIdSlotMap::value_type& slot_id_with_channel_group :
+      channel_groups_) {
+    if (slot_id_with_channel_group.first != kCommonSlotId) {
+      slot_ids->emplace(slot_id_with_channel_group.first);
+    }
   }
 }
 
