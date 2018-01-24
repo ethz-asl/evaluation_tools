@@ -80,11 +80,8 @@ class Experiment(object):
     if 'localization_map' in self.eval_dict.keys() and \
         not self.eval_dict['localization_map'] == None and \
         not self.eval_dict['localization_map'] == '':
-      localization_map = str(
-          self.root_folder + '/maps/' + self.eval_dict['localization_map'])
-      if not os.path.isdir(localization_map):
-        raise Exception(
-            'Unable to find the localizatoin map: ' + localization_map)
+      localization_map = self._findFile("maps",
+                                        self.eval_dict["localization_map"])
 
       self.eval_dict['localization_map'] = localization_map
       self.logger.info("Localization map: " + localization_map)
