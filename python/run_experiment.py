@@ -36,8 +36,8 @@ class Experiment(object):
 
     if len(self.root_folder) == 0:
       raise Exception(
-          "Unable to find the root folder of package evaluation_tools in the \
-                          catkin workspace."                                            )
+          "Unable to find the root folder of package evaluation_tools in the" \
+          "catkin workspace.")
 
     if not os.path.exists(self.results_folder):
       os.makedirs(self.results_folder)
