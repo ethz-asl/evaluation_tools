@@ -26,18 +26,14 @@ class Experiment(object):
     self.logger = logging.getLogger(__name__)
 
     self.logger.info("Checking parameters")
-    experiment_path, experiment_file = os.path.split(experiment_file)
-    if experiment_path == '':
-      self.root_folder = catkin_utils.catkinFindSrc("evaluation_tools")
-      self.results_folder = results_folder
-    else:
-      self.root_folder = os.path.split(experiment_path)[0]
-      self.results_folder = self.root_folder + '/results/'
-
-    if len(self.root_folder) == 0:
+    if not os.path.isfile(experiment_file):
       raise Exception(
-          "Unable to find the root folder of package evaluation_tools in the" \
-          "catkin workspace.")
+          'The experiment file "' + experiment_file + "' doesn't exist.")
+
+    experiment_file = os.path.realpath(experiment_file)
+    self.root_folder = os.path.dirname(experiment_file)
+    self.experiment_file = experiment_file
+    self.results_folder = results_folder
 
     if not os.path.exists(self.results_folder):
       os.makedirs(self.results_folder)
@@ -45,11 +41,6 @@ class Experiment(object):
     # Check Parameters
     if not experiment_file.endswith('.yaml'):
       experiment_file += '.yaml'
-
-    self.experiment_file = self.root_folder + '/experiments/' + experiment_file
-    if not os.path.isfile(self.experiment_file):
-      raise ValueError(
-          "Could not find experiment YAML file: " + experiment_file)
 
     # Read Evaluation File
     self.experiment_filename = os.path.basename(experiment_file).replace(
@@ -80,14 +71,8 @@ class Experiment(object):
     # Find sensors file:
     sensors_file = ''
     if 'sensors_file' in self.eval_dict.keys():
-      sensors_file = str(
-          self.root_folder + '/calibrations/' + self.eval_dict['sensors_file'])
-    if not os.path.isfile(sensors_file):
-      raise Exception(
-          'Unable to find the sensors calibration file. Make sure in your '
-          'experiments YAML there is a valid "sensors_file" specified. It is '
-          'expected to be located in the calibration folder: ' +
-          self.root_folder + '/calibrations')
+      sensors_file = self._findFile("calibrations",
+                                    self.eval_dict['sensors_file'])
     self.eval_dict['sensors_file'] = sensors_file
     self.logger.info("Using sensors file: " + sensors_file)
 
@@ -164,16 +149,13 @@ class Experiment(object):
     # Create set of parameter files
     self.parameter_files = set()
     for filename in self.eval_dict["parameter_files"]:
-      if not os.path.isfile(self.root_folder + '/parameter_files/' + filename):
-        raise ValueError(filename + ' parameter file was not found')
-      self.parameter_files.add(filename)
+      self.parameter_files.add(self._findFile("parameter_files", filename))
 
     # Create jobs for all dataset-parameter file combination.
     self.job_paths = []
     for dataset in self.datasets:
       for parameter_file in self.parameter_files:
-        filepath = self.root_folder + '/parameter_files/' + parameter_file
-        params = yaml.safe_load(open(filepath))
+        params = yaml.safe_load(open(parameter_file))
 
         if 'parameter_sweep' in params:
           p_name = params['parameter_sweep']["name"]
@@ -203,6 +185,33 @@ class Experiment(object):
 
           self.job_paths.append(
               self._createJobFolder(params, str(dataset), str(parameter_file)))
+
+  def _findFile(self, base_folder, file_name):
+    """Try to find a given file.
+
+    This will look for file_name in the current directory, in
+    <root_folder>/<base_folder>/<file_name> and
+    <root_folder/../<base_folder>/<file_name>.
+
+    Returns the path of the file on the disk if it was found, otherwise an
+    exception is raised.
+    """
+    if os.path.isfile(file_name):
+      return file_name
+
+    file_name_to_try_1 = os.path.join(self.root_folder, base_folder, file_name)
+    if os.path.isfile(file_name_to_try_1):
+      return file_name_to_try_1
+
+    file_name_to_try_2 = os.path.join(
+        os.path.dirname(self.root_folder), base_folder, file_name)
+    if os.path.isfile(file_name_to_try_2):
+      return file_name_to_try_2
+
+    raise Exception(
+        'Unable to find the file "' + file_name + '". Checked in:\n- ' +
+        file_name + '\n- ' + file_name_to_try_1 + '\n- ' + file_name_to_try_2)
+
 
   def _createJobFolder(self, parameters, dataset_name, parameter_file):
     job_folder = str(
@@ -300,13 +309,7 @@ if __name__ == '__main__':
   logger.info('Experiment started')
 
   local_data_folder_default = datasets.getLocalDatasetsFolder()
-  experiments_folder = catkin_utils.catkinFindSrc('evaluation_tools')
-  if experiments_folder:
-    input_folder_default = os.path.join(experiments_folder, 'experiments')
-    output_folder_default = os.path.join(experiments_folder, 'results')
-  else:
-    input_folder_default = ''
-    output_folder_default = ''
+  output_folder_default = './results'
 
   parser = argparse.ArgumentParser(description='''Experiment''')
   parser.add_argument(
