@@ -108,7 +108,7 @@ class Experiment(object):
                     self.eval_dict['evaluation_scripts'].append({'name': 'prepare_statistics.py'})
 
         # Create set of datasets and download them if needed
-        self.datasets = set()
+        self.datasets = []
         local_dataset_dir = datasets.getLocalDatasetsFolder()
         available_datasets = datasets.getDatasetList()
         downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
@@ -135,7 +135,7 @@ class Experiment(object):
                     available_datasets = datasets.getDatasetList()
                     downloaded_datasets, local_dataset_dir = datasets.getDownloadedDatasets()
 
-            self.datasets.add(str(os.path.join(local_dataset_dir, dataset['name'])))
+            self.datasets.append(str(os.path.join(local_dataset_dir, dataset['name'])))
             # if os.path.isfile(self.eval_dict['dataset']):
             #     self.dataset_type = 'rosbag'
             # elif os.path.isdir(self.eval_dict['dataset']):
