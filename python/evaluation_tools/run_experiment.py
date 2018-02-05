@@ -104,7 +104,7 @@ class Experiment(object):
               'prepare_statistics.py'
           })
 
-    # Create set of datasets and download them if needed
+    # Create set of datasets and download them if needed.
     self.datasets = []
     local_dataset_dir = datasets.getLocalDatasetsFolder()
     available_datasets = datasets.getDatasetList()
@@ -112,36 +112,33 @@ class Experiment(object):
     for dataset in self.eval_dict['datasets']:
       # Check if dataset is available:
       dataset_path, dataset_name = os.path.split(dataset['name'])
-      if not dataset_path == '':
-        # Absolute path.
-        self.eval_dict['dataset'] = str(
-            os.path.join(dataset_path, dataset_name))
+      if not dataset_path == '' and os.path.isfile(dataset['name']):
+        # Local path.
+        self.datasets.append(dataset['name'])
+      else:
+        if dataset['name'] not in downloaded_datasets:
+          self.logger.info(
+              "Dataset '" + dataset['name'] + "' is not available.")
+          if dataset['name'] not in available_datasets:
+            self.logger.info("Dataset is not available on the server.")
 
-      elif dataset['name'] not in downloaded_datasets:
-        self.logger.info("Dataset '" + dataset['name'] + "' is not available")
-        if dataset['name'] not in available_datasets:
-          self.logger.info("Dataset is not available on the server.")
-          #raise Exception("Dataset not found.")
+          # Download dataset:
+          if automatic_dataset_download:
+            download = True
+          else:
+            download = eval_utils.userYesNoQuery(
+                "Download datasets from server?")
+          if download:
+            datasets.downloadDataset(dataset['name'])
+            available_datasets = datasets.getDatasetList()
+            downloaded_datasets, local_dataset_dir = \
+                datasets.getDownloadedDatasets()
 
-        # Download dataset:
-        if automatic_dataset_download:
-          download = True
-        else:
-          download = eval_utils.userYesNoQuery("Download datasets from server?")
-        if download:
-          datasets.downloadDataset(dataset['name'])
-          available_datasets = datasets.getDatasetList()
-          downloaded_datasets, local_dataset_dir = \
-              datasets.getDownloadedDatasets()
-
-      self.datasets.append(str(os.path.join(local_dataset_dir, dataset['name'])))
-      # if os.path.isfile(self.eval_dict['dataset']):
-      #   self.dataset_type = 'rosbag'
-      # elif os.path.isdir(self.eval_dict['dataset']):
-      #   self.dataset_type = 'csv'
-      # else:
-      #   raise ValueError(
-      #       'Dataset instance does not exist: '+self.eval_dict['dataset'])
+        dataset_path = os.path.join(local_dataset_dir, dataset['name'])
+        if not os.path.isfile(dataset_path):
+          raise Exception(
+              "Unable to obtain the dataset " + dataset['name'] + ".")
+        self.datasets.append(dataset_path)
 
     # Create set of parameter files
     self.parameter_files = set()
@@ -208,7 +205,6 @@ class Experiment(object):
     raise Exception(
         'Unable to find the file "' + file_name + '". Checked in:\n- ' +
         file_name + '\n- ' + file_name_to_try_1 + '\n- ' + file_name_to_try_2)
-
 
   def _createJobFolder(self, parameters, dataset_name, parameter_file):
     job_folder = str(
