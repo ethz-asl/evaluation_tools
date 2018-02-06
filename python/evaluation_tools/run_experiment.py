@@ -26,18 +26,14 @@ class Experiment(object):
     self.logger = logging.getLogger(__name__)
 
     self.logger.info("Checking parameters")
-    experiment_path, experiment_file = os.path.split(experiment_file)
-    if experiment_path == '':
-      self.root_folder = catkin_utils.catkinFindSrc("evaluation_tools")
-      self.results_folder = results_folder
-    else:
-      self.root_folder = os.path.split(experiment_path)[0]
-      self.results_folder = self.root_folder + '/results/'
-
-    if len(self.root_folder) == 0:
+    if not os.path.isfile(experiment_file):
       raise Exception(
-          "Unable to find the root folder of package evaluation_tools in the" \
-          "catkin workspace.")
+          'The experiment file "' + experiment_file + "' doesn't exist.")
+
+    experiment_file = os.path.realpath(experiment_file)
+    self.root_folder = os.path.dirname(experiment_file)
+    self.experiment_file = experiment_file
+    self.results_folder = results_folder
 
     if not os.path.exists(self.results_folder):
       os.makedirs(self.results_folder)
@@ -45,11 +41,6 @@ class Experiment(object):
     # Check Parameters
     if not experiment_file.endswith('.yaml'):
       experiment_file += '.yaml'
-
-    self.experiment_file = self.root_folder + '/experiments/' + experiment_file
-    if not os.path.isfile(self.experiment_file):
-      raise ValueError(
-          "Could not find experiment YAML file: " + experiment_file)
 
     # Read Evaluation File
     self.experiment_filename = os.path.basename(experiment_file).replace(
@@ -80,14 +71,8 @@ class Experiment(object):
     # Find sensors file:
     sensors_file = ''
     if 'sensors_file' in self.eval_dict.keys():
-      sensors_file = str(
-          self.root_folder + '/calibrations/' + self.eval_dict['sensors_file'])
-    if not os.path.isfile(sensors_file):
-      raise Exception(
-          'Unable to find the sensors calibration file. Make sure in your '
-          'experiments YAML there is a valid "sensors_file" specified. It is '
-          'expected to be located in the calibration folder: ' +
-          self.root_folder + '/calibrations')
+      sensors_file = eval_utils.findFileOrDir(self.root_folder, "calibrations",
+                                              self.eval_dict['sensors_file'])
     self.eval_dict['sensors_file'] = sensors_file
     self.logger.info("Using sensors file: " + sensors_file)
 
@@ -95,11 +80,8 @@ class Experiment(object):
     if 'localization_map' in self.eval_dict.keys() and \
         not self.eval_dict['localization_map'] == None and \
         not self.eval_dict['localization_map'] == '':
-      localization_map = str(
-          self.root_folder + '/maps/' + self.eval_dict['localization_map'])
-      if not os.path.isdir(localization_map):
-        raise Exception(
-            'Unable to find the localizatoin map: ' + localization_map)
+      localization_map = eval_utils.findFileOrDir(
+          self.root_folder, "maps", self.eval_dict["localization_map"])
 
       self.eval_dict['localization_map'] = localization_map
       self.logger.info("Localization map: " + localization_map)
@@ -122,7 +104,7 @@ class Experiment(object):
               'prepare_statistics.py'
           })
 
-    # Create set of datasets and download them if needed
+    # Create set of datasets and download them if needed.
     self.datasets = []
     local_dataset_dir = datasets.getLocalDatasetsFolder()
     available_datasets = datasets.getDatasetList()
@@ -130,50 +112,46 @@ class Experiment(object):
     for dataset in self.eval_dict['datasets']:
       # Check if dataset is available:
       dataset_path, dataset_name = os.path.split(dataset['name'])
-      if not dataset_path == '':
-        # Absolute path.
-        self.eval_dict['dataset'] = str(
-            os.path.join(dataset_path, dataset_name))
+      if not dataset_path == '' and os.path.isfile(dataset['name']):
+        # Local path.
+        self.datasets.append(dataset['name'])
+      else:
+        if dataset['name'] not in downloaded_datasets:
+          self.logger.info(
+              "Dataset '" + dataset['name'] + "' is not available.")
+          if dataset['name'] not in available_datasets:
+            self.logger.info("Dataset is not available on the server.")
 
-      elif dataset['name'] not in downloaded_datasets:
-        self.logger.info("Dataset '" + dataset['name'] + "' is not available")
-        if dataset['name'] not in available_datasets:
-          self.logger.info("Dataset is not available on the server.")
-          #raise Exception("Dataset not found.")
+          # Download dataset:
+          if automatic_dataset_download:
+            download = True
+          else:
+            download = eval_utils.userYesNoQuery(
+                "Download datasets from server?")
+          if download:
+            datasets.downloadDataset(dataset['name'])
+            available_datasets = datasets.getDatasetList()
+            downloaded_datasets, local_dataset_dir = \
+                datasets.getDownloadedDatasets()
 
-        # Download dataset:
-        if automatic_dataset_download:
-          download = True
-        else:
-          download = eval_utils.userYesNoQuery("Download datasets from server?")
-        if download:
-          datasets.downloadDataset(dataset['name'])
-          available_datasets = datasets.getDatasetList()
-          downloaded_datasets, local_dataset_dir = \
-              datasets.getDownloadedDatasets()
-
-      self.datasets.append(str(os.path.join(local_dataset_dir, dataset['name'])))
-      # if os.path.isfile(self.eval_dict['dataset']):
-      #   self.dataset_type = 'rosbag'
-      # elif os.path.isdir(self.eval_dict['dataset']):
-      #   self.dataset_type = 'csv'
-      # else:
-      #   raise ValueError(
-      #       'Dataset instance does not exist: '+self.eval_dict['dataset'])
+        dataset_path = os.path.join(local_dataset_dir, dataset['name'])
+        if not os.path.isfile(dataset_path):
+          raise Exception(
+              "Unable to obtain the dataset " + dataset['name'] + ".")
+        self.datasets.append(dataset_path)
 
     # Create set of parameter files
     self.parameter_files = set()
     for filename in self.eval_dict["parameter_files"]:
-      if not os.path.isfile(self.root_folder + '/parameter_files/' + filename):
-        raise ValueError(filename + ' parameter file was not found')
-      self.parameter_files.add(filename)
+      self.parameter_files.add(
+          eval_utils.findFileOrDir(self.root_folder, "parameter_files",
+                                   filename))
 
     # Create jobs for all dataset-parameter file combination.
     self.job_paths = []
     for dataset in self.datasets:
       for parameter_file in self.parameter_files:
-        filepath = self.root_folder + '/parameter_files/' + parameter_file
-        params = yaml.safe_load(open(filepath))
+        params = yaml.safe_load(open(parameter_file))
 
         if 'parameter_sweep' in params:
           p_name = params['parameter_sweep']["name"]
@@ -301,13 +279,7 @@ if __name__ == '__main__':
   logger.info('Experiment started')
 
   local_data_folder_default = datasets.getLocalDatasetsFolder()
-  experiments_folder = catkin_utils.catkinFindSrc('evaluation_tools')
-  if experiments_folder:
-    input_folder_default = os.path.join(experiments_folder, 'experiments')
-    output_folder_default = os.path.join(experiments_folder, 'results')
-  else:
-    input_folder_default = ''
-    output_folder_default = ''
+  output_folder_default = './results'
 
   parser = argparse.ArgumentParser(description='''Experiment''')
   parser.add_argument(
