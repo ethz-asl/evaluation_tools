@@ -36,8 +36,8 @@ class Evaluation(object):
       if 'name' not in evaluation:
         raise Exception("Missing name tag")
       evaluation_script = evaluation['name']
-      evaluation_script_with_path = self.root_folder + '/evaluation/' + \
-          evaluation_script
+      evaluation_script_with_path = eval_utils.findFileOrDir(
+          self.root_folder, "evaluation", evaluation_script)
 
       jp = Job()
       jp.setPythonExecutable(evaluation_script_with_path)

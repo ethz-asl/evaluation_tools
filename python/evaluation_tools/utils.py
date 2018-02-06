@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import os
 import sys
 
 
@@ -26,3 +27,30 @@ def userYesNoQuery(question):
       return False
     else:
       sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
+
+
+def findFileOrDir(root_folder, base_folder, file_name):
+  """Try to find a given file or directory.
+
+  This will look for file_name in the current directory, in
+  <root_folder>/<base_folder>/<file_name> and
+  <root_folder/../<base_folder>/<file_name>.
+
+  Returns the path of the file on the disk if it was found, otherwise an
+  exception is raised.
+  """
+  if os.path.isfile(file_name) or os.path.isdir(file_name):
+    return file_name
+
+  file_name_to_try_1 = os.path.join(root_folder, base_folder, file_name)
+  if os.path.isfile(file_name_to_try_1) or os.path.isdir(file_name_to_try_1):
+    return file_name_to_try_1
+
+  file_name_to_try_2 = os.path.join(
+      os.path.dirname(root_folder), base_folder, file_name)
+  if os.path.isfile(file_name_to_try_2) or os.path.isdir(file_name_to_try_2):
+    return file_name_to_try_2
+
+  raise Exception(
+      'Unable to find the file "' + file_name + '". Checked in:\n- ' +
+      file_name + '\n- ' + file_name_to_try_1 + '\n- ' + file_name_to_try_2)

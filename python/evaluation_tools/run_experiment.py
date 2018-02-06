@@ -71,8 +71,8 @@ class Experiment(object):
     # Find sensors file:
     sensors_file = ''
     if 'sensors_file' in self.eval_dict.keys():
-      sensors_file = self._findFile("calibrations",
-                                    self.eval_dict['sensors_file'])
+      sensors_file = eval_utils.findFileOrDir(self.root_folder, "calibrations",
+                                              self.eval_dict['sensors_file'])
     self.eval_dict['sensors_file'] = sensors_file
     self.logger.info("Using sensors file: " + sensors_file)
 
@@ -80,8 +80,8 @@ class Experiment(object):
     if 'localization_map' in self.eval_dict.keys() and \
         not self.eval_dict['localization_map'] == None and \
         not self.eval_dict['localization_map'] == '':
-      localization_map = self._findFile("maps",
-                                        self.eval_dict["localization_map"])
+      localization_map = eval_utils.findFileOrDir(
+          self.root_folder, "maps", self.eval_dict["localization_map"])
 
       self.eval_dict['localization_map'] = localization_map
       self.logger.info("Localization map: " + localization_map)
@@ -143,7 +143,9 @@ class Experiment(object):
     # Create set of parameter files
     self.parameter_files = set()
     for filename in self.eval_dict["parameter_files"]:
-      self.parameter_files.add(self._findFile("parameter_files", filename))
+      self.parameter_files.add(
+          eval_utils.findFileOrDir(self.root_folder, "parameter_files",
+                                   filename))
 
     # Create jobs for all dataset-parameter file combination.
     self.job_paths = []
@@ -179,32 +181,6 @@ class Experiment(object):
 
           self.job_paths.append(
               self._createJobFolder(params, str(dataset), str(parameter_file)))
-
-  def _findFile(self, base_folder, file_name):
-    """Try to find a given file.
-
-    This will look for file_name in the current directory, in
-    <root_folder>/<base_folder>/<file_name> and
-    <root_folder/../<base_folder>/<file_name>.
-
-    Returns the path of the file on the disk if it was found, otherwise an
-    exception is raised.
-    """
-    if os.path.isfile(file_name):
-      return file_name
-
-    file_name_to_try_1 = os.path.join(self.root_folder, base_folder, file_name)
-    if os.path.isfile(file_name_to_try_1):
-      return file_name_to_try_1
-
-    file_name_to_try_2 = os.path.join(
-        os.path.dirname(self.root_folder), base_folder, file_name)
-    if os.path.isfile(file_name_to_try_2):
-      return file_name_to_try_2
-
-    raise Exception(
-        'Unable to find the file "' + file_name + '". Checked in:\n- ' +
-        file_name + '\n- ' + file_name_to_try_1 + '\n- ' + file_name_to_try_2)
 
   def _createJobFolder(self, parameters, dataset_name, parameter_file):
     job_folder = str(
