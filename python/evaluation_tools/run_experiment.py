@@ -230,8 +230,10 @@ class Experiment(object):
       }
       for command in self.eval_dict['console_commands']:
         if isinstance(command, str):
+          command = command.replace('<LOG_DIR>', job_folder)
           command = command.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
           command = command.replace('<OUTPUT_MAP_KEY>', output_map_key)
+          command = command.replace('<OUTPUT_DIR>', job_folder)
           console_batch_runner_settings['commands'].append(command)
       del job_settings['console_commands']
 
