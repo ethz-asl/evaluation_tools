@@ -194,6 +194,8 @@ class Experiment(object):
     # Replace variables in parameters:
     job_parameters = copy.deepcopy(parameters)
     job_parameters['log_dir'] = job_folder
+    output_map_key = os.path.basename(dataset_name).replace('.bag', '')
+    output_map_folder = os.path.join(job_folder, output_map_key)
     for key, value in job_parameters.items():
       if isinstance(value, str):
         value = value.replace('<LOG_DIR>', job_folder)
@@ -201,8 +203,10 @@ class Experiment(object):
         value = value.replace('<BAG_FILENAME>', dataset_name)
         value = value.replace('<LOCALIZATION_MAP>',
                               self.eval_dict['localization_map'])
+        value = value.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
         value = value.replace('<OUTPUT_DIR>', job_folder)
         job_parameters[key] = value
+
     # We do not want to pass parameter_sweep as an argument to the executable
     if 'parameter_sweep' in job_parameters:
       del job_parameters['parameter_sweep']
@@ -217,10 +221,24 @@ class Experiment(object):
     del job_settings['parameter_files']
     del job_settings['datasets']
 
+    # Write console batch runner file.
+    console_batch_runner_settings = {
+        "vi_map_folder_paths": [output_map_folder],
+        "commands": self.eval_dict['console_commands']
+    }
+    console_batch_runner_filename = os.path.join(job_folder,
+                                                 "console_commands.yaml")
+    self.logger.info("Write " + console_batch_runner_filename)
+    with open(console_batch_runner_filename, "w") as out_file_stream:
+      yaml.dump(
+          console_batch_runner_settings,
+          stream=out_file_stream,
+          default_flow_style=False)
+
     job_filename = os.path.join(job_folder, "job.yaml")
     self.logger.info("Write " + job_filename)
-    out_file_stream = open(job_filename, "w")
-    yaml.dump(job_settings, stream=out_file_stream, default_flow_style=False)
+    with open(job_filename, "w") as out_file_stream:
+      yaml.dump(job_settings, stream=out_file_stream, default_flow_style=False)
 
     # Copy groundtruth if available
     # if self.dataset_type == 'rosbag':
