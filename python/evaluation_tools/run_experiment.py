@@ -166,8 +166,8 @@ class Experiment(object):
             params[p_name] = p_current
             self.eval_dict['experiment_name'] = str(
                 experiment_basename + '/' + os.path.basename(dataset).replace(
-                    '.bag', '') + '__' + parameter_file.replace('.yaml', '') +
-                '__SWEEP_' + str(step))
+                    '.bag', '') + '__' + os.path.basename(parameter_file)
+                .replace('.yaml', '') + '__SWEEP_' + str(step))
 
             parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
             self.job_paths.append(
@@ -176,8 +176,9 @@ class Experiment(object):
             step += 1
         else:
           self.eval_dict['experiment_name'] = str(
-              experiment_basename + '/' + os.path.basename(dataset).replace(
-                  '.bag', '') + '__' + parameter_file.replace('.yaml', ''))
+              experiment_basename + '/' +
+              os.path.basename(dataset).replace('.bag', '') + '__' +
+              os.path.basename(parameter_file).replace('.yaml', ''))
 
           self.job_paths.append(
               self._createJobFolder(params, str(dataset), str(parameter_file)))
