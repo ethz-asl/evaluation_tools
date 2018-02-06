@@ -196,11 +196,12 @@ class Experiment(object):
     job_parameters['log_dir'] = job_folder
     for key, value in job_parameters.items():
       if isinstance(value, str):
-        value = value.replace('LOG_DIR', job_folder)
-        value = value.replace('SENSORS_YAML', self.eval_dict['sensors_file'])
-        value = value.replace('BAG_FILENAME', dataset_name)
-        value = value.replace('MAP', self.eval_dict['localization_map'])
-        value = value.replace('OUTPUT_DIR', job_folder)
+        value = value.replace('<LOG_DIR>', job_folder)
+        value = value.replace('<SENSORS_YAML>', self.eval_dict['sensors_file'])
+        value = value.replace('<BAG_FILENAME>', dataset_name)
+        value = value.replace('<LOCALIZATION_MAP>',
+                              self.eval_dict['localization_map'])
+        value = value.replace('<OUTPUT_DIR>', job_folder)
         job_parameters[key] = value
     # We do not want to pass parameter_sweep as an argument to the executable
     if 'parameter_sweep' in job_parameters:
