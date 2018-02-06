@@ -222,27 +222,29 @@ class Experiment(object):
     del job_settings['datasets']
 
     # Write console batch runner file.
-    console_batch_runner_settings = {
-        "vi_map_folder_paths": [output_map_folder],
-        "commands": []
-    }
-    for command in self.eval_dict['console_commands']:
-      if isinstance(command, str):
-        command = command.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
-        command = command.replace('<OUTPUT_MAP_KEY>', output_map_key)
-        console_batch_runner_settings['commands'].append(command)
-    del job_settings['console_commands']
+    if 'console_commands' in self.eval_dict and len(
+        self.eval_dict['console_commands']) > 0:
+      console_batch_runner_settings = {
+          "vi_map_folder_paths": [output_map_folder],
+          "commands": []
+      }
+      for command in self.eval_dict['console_commands']:
+        if isinstance(command, str):
+          command = command.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
+          command = command.replace('<OUTPUT_MAP_KEY>', output_map_key)
+          console_batch_runner_settings['commands'].append(command)
+      del job_settings['console_commands']
 
-    console_batch_runner_filename = os.path.join(job_folder,
-                                                 "console_commands.yaml")
-    self.logger.info("Write " + console_batch_runner_filename)
-    with open(console_batch_runner_filename, "w") as out_file_stream:
-      print console_batch_runner_settings
-      yaml.dump(
-          console_batch_runner_settings,
-          stream=out_file_stream,
-          default_flow_style=False,
-          width=10000)  # Prevent random line breaks in long strings.
+      console_batch_runner_filename = os.path.join(job_folder,
+                                                   "console_commands.yaml")
+      self.logger.info("Write " + console_batch_runner_filename)
+      with open(console_batch_runner_filename, "w") as out_file_stream:
+        print console_batch_runner_settings
+        yaml.dump(
+            console_batch_runner_settings,
+            stream=out_file_stream,
+            default_flow_style=False,
+            width=10000)  # Prevent random line breaks in long strings.
 
     job_filename = os.path.join(job_folder, "job.yaml")
     self.logger.info("Write " + job_filename)
