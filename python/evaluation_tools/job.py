@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+import IPython
+import argparse
+import catkin_utils
+import copy
+import logging
 import os
 import yaml
-import argparse
-import logging
-import catkin_utils
-import IPython
 
 
 class Job(object):
@@ -101,6 +102,87 @@ class Job(object):
     out_file_path = os.path.join(self.job_path, filename)
     out_file_stream = open(out_file_path, "w")
     yaml.dump(summary_dict, stream=out_file_stream, default_flow_style=False)
+
+
+def createJobFolder(dataset_name,
+                    results_folder,
+                    experiment_dict,
+                    parameter_name,
+                    parameter_dict,
+                    summarize_statistics=False):
+  logging.basicConfig(level=logging.DEBUG)
+  logger = logging.getLogger("createJobFolder")
+  job_folder = str(
+      os.path.join(results_folder, experiment_dict['experiment_name']))
+  logger.info("==> Creating job folder '{}'".format(job_folder))
+  if not os.path.exists(job_folder):
+    os.makedirs(job_folder)
+  else:
+    logger.info("Job folder already exists '{}'".format(job_folder))
+
+  # Replace variables in parameters:
+  job_parameters = copy.deepcopy(parameter_dict)
+  job_parameters['log_dir'] = job_folder
+  output_map_key = os.path.basename(dataset_name).replace('.bag', '')
+  output_map_folder = os.path.join(job_folder, output_map_key)
+  for key, value in job_parameters.items():
+    if isinstance(value, str):
+      value = value.replace('<LOG_DIR>', job_folder)
+      value = value.replace('<SENSORS_YAML>', experiment_dict['sensors_file'])
+      value = value.replace('<BAG_FILENAME>', dataset_name)
+      value = value.replace('<LOCALIZATION_MAP>',
+                            experiment_dict['localization_map'])
+      value = value.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
+      value = value.replace('<OUTPUT_DIR>', job_folder)
+      job_parameters[key] = value
+
+  # We do not want to pass parameter_sweep as an argument to the executable
+  if 'parameter_sweep' in job_parameters:
+    del job_parameters['parameter_sweep']
+  if summarize_statistics:
+    job_parameters['swe_write_statistics_to_file'] = 1
+
+  # Write options to file.
+  job_settings = copy.deepcopy(experiment_dict)
+  job_settings['parameter_file'] = parameter_name
+  job_settings['dataset'] = dataset_name
+  job_settings['parameters'] = job_parameters
+  del job_settings['parameter_files']
+  del job_settings['datasets']
+
+  # Write console batch runner file.
+  if 'console_commands' in experiment_dict and len(
+      experiment_dict['console_commands']) > 0:
+    console_batch_runner_settings = {
+        "vi_map_folder_paths": [output_map_folder],
+        "commands": []
+    }
+    for command in experiment_dict['console_commands']:
+      if isinstance(command, str):
+        command = command.replace('<LOG_DIR>', job_folder)
+        command = command.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
+        command = command.replace('<OUTPUT_MAP_KEY>', output_map_key)
+        console_batch_runner_settings['commands'].append(command)
+        command = command.replace('<OUTPUT_DIR>', job_folder)
+    del job_settings['console_commands']
+
+    console_batch_runner_filename = os.path.join(job_folder,
+                                                 "console_commands.yaml")
+    logger.info("Write " + console_batch_runner_filename)
+    with open(console_batch_runner_filename, "w") as out_file_stream:
+      print console_batch_runner_settings
+      yaml.dump(
+          console_batch_runner_settings,
+          stream=out_file_stream,
+          default_flow_style=False,
+          width=10000)  # Prevent random line breaks in long strings.
+
+  job_filename = os.path.join(job_folder, "job.yaml")
+  logger.info("Write " + job_filename)
+  with open(job_filename, "w") as out_file_stream:
+    yaml.dump(job_settings, stream=out_file_stream, default_flow_style=False)
+
+  return job_folder
 
 
 if __name__ == '__main__':
