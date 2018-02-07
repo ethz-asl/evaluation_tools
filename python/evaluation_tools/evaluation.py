@@ -6,7 +6,7 @@ import argparse
 import logging
 import utils as eval_utils
 import IPython
-from command_runner import CommandRunner
+from command_runner import runCommand
 
 
 class Evaluation(object):
@@ -47,9 +47,7 @@ class Evaluation(object):
         params_dict["parameter_file"] = self.job["parameter_file"]
       if "dataset" in self.job:
         params_dict["dataset"] = self.job["dataset"]
-      cmd_runner = CommandRunner(
-          evaluation_script_with_path, params_dict=params_dict)
-      cmd_runner.execute()
+      runCommand(evaluation_script_with_path, params_dict=params_dict)
 
 
 if __name__ == '__main__':

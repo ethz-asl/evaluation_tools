@@ -5,7 +5,7 @@ import yaml
 import argparse
 import logging
 import utils as eval_utils
-from command_runner import CommandRunner
+from command_runner import runCommand
 
 
 class Preprocessing(object):
@@ -38,11 +38,10 @@ class Preprocessing(object):
         for key, value in script["parameters"].items():
           params_dict[key] = value
 
-      cmd_runner = CommandRunner(
+      runCommand(
           exec_app=script["app_name"],
           exec_name=script["app_executable"],
           params_dict=params_dict)
-      cmd_runner.execute()
 
 
 if __name__ == '__main__':

@@ -18,9 +18,22 @@ import yaml
 
 
 class Experiment(object):
+  """Main class for running an evaluation experiment."""
 
   def __init__(self, experiment_file, results_folder,
                automatic_dataset_download):
+    """Initializes the experiment.
+
+    Loads and parses the yaml and creates the corresponding job objects to be
+    run at a later stage.
+
+    Input:
+    - experiment_file: yaml with the experiment info.
+    - results_folder: folder where the results of the evaluation are stored.
+    - automatic_dataset_download: if True, datasets that cannot be found on
+          disk will be automatically retrieved from a remote location as
+          specified in the datasets yaml.
+    """
     logging.basicConfig(level=logging.DEBUG)
     self.logger = logging.getLogger(__name__)
 
@@ -94,7 +107,7 @@ class Experiment(object):
         if self.eval_dict['summarize_statistics']['enabled']:
           self.summarize_statistics = True
           # Summarization requires that each job runs the prepare_statistics.py
-          # script after execution
+          # script after execution.
           if 'evaluation_scripts' not in self.eval_dict or \
               self.eval_dict['evaluation_scripts'] is None:
             self.eval_dict['evaluation_scripts'] = []
@@ -195,12 +208,14 @@ class Experiment(object):
           self.job_list.append(job)
 
   def preprocessing(self):
+    """Run preprocessing scripts for this experiment."""
     for job in self.job_list:
       self.logger.info("Preprocessing: " + job.job_path)
       preprocessing = Preprocessing(job.job_path)
       preprocessing.run_preprocessing()
 
   def runAndEvaluate(self):
+    """Run estimator and console commands and all evaluation scripts."""
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
       job.execute()
@@ -230,7 +245,6 @@ class Experiment(object):
 
 
 if __name__ == '__main__':
-
   logging.basicConfig(level=logging.DEBUG)
   logger = logging.getLogger(__name__)
   logger.info('Experiment started')
