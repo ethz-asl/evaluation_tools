@@ -31,17 +31,25 @@ class Preprocessing(object):
   def run_preprocessing(self):
     for script in self.preprocessing_scripts:
       self.logger.info("=== Run Preprocessing ===")
-      eval_utils.assert_param(script, "app_name")
-      eval_utils.assert_param(script, "app_executable")
+      if 'name' in script:
+        preprocessing_script = script['name']
+        preprocessing_script_with_path = eval_utils.findFileOrDir(
+            self.root_folder, "preprocessing", preprocessing_script)
+      elif 'package' in script and 'executable' in script:
+        package_path = catkin_utils.catkinFindLib(script['package'])
+        preprocessing_script_with_path = os.path.join(
+            package_path, script['executable'])
+      else:
+        raise Exception(
+            'Please either provide a "name" entry or a "package" and '
+            '"executable" entry in the preprocessing script listing.')
+
       params_dict = {"data_dir": self.job_dir}
       if "parameters" in script:
         for key, value in script["parameters"].items():
           params_dict[key] = value
 
-      runCommand(
-          exec_app=script["app_name"],
-          exec_name=script["app_executable"],
-          params_dict=params_dict)
+      runCommand(preprocessing_script_with_path, params_dict=params_dict)
 
 
 if __name__ == '__main__':

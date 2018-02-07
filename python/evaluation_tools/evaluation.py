@@ -33,11 +33,18 @@ class Evaluation(object):
   def runEvaluations(self):
     for evaluation in self.evaluation_scripts:
       self.logger.info("=== Run Evaluation ===")
-      if 'name' not in evaluation:
-        raise Exception("Missing name tag")
-      evaluation_script = evaluation['name']
-      evaluation_script_with_path = eval_utils.findFileOrDir(
-          self.root_folder, "evaluation", evaluation_script)
+      if 'name' in evaluation:
+        evaluation_script = evaluation['name']
+        evaluation_script_with_path = eval_utils.findFileOrDir(
+            self.root_folder, "evaluation", evaluation_script)
+      elif 'package' in evaluation and 'executable' in evaluation:
+        package_path = catkin_utils.catkinFindLib(evaluation['package'])
+        evaluation_script_with_path = os.path.join(
+            package_path, evaluation['executable'])
+      else:
+        raise Exception(
+            'Please either provide a "name" entry or a "package" and '
+            '"executable" entry in the evaluation script listing.')
 
       params_dict = {
           "data_dir": self.job_dir,
