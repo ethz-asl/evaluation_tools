@@ -5,7 +5,7 @@ import yaml
 import argparse
 import logging
 import utils as eval_utils
-from job import Job
+from command_runner import CommandRunner
 
 
 class Preprocessing(object):
@@ -33,13 +33,16 @@ class Preprocessing(object):
       self.logger.info("=== Run Preprocessing ===")
       eval_utils.assert_param(script, "app_name")
       eval_utils.assert_param(script, "app_executable")
-      jp = Job()
-      jp.set_python_executable(script["app_name"], script["app_executable"])
-      jp.add_param("data_dir", self.job_dir)
+      params_dict = {"data_dir": self.job_dir}
       if "parameters" in script:
         for key, value in script["parameters"].items():
-          jp.add_param(key, value)
-      jp.execute()
+          params_dict[key] = value
+
+      cmd_runner = CommandRunner(
+          exec_app=script["app_name"],
+          exec_name=script["app_executable"],
+          params_dict=params_dict)
+      cmd_runner.execute()
 
 
 if __name__ == '__main__':

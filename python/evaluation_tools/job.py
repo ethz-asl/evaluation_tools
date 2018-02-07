@@ -7,6 +7,7 @@ import copy
 import logging
 import os
 import yaml
+from command_runner import CommandRunner
 
 
 class Job(object):
@@ -16,13 +17,90 @@ class Job(object):
     self.logger = logging.getLogger(__name__)
     self.params_dict = {}
 
-  def setPythonExecutable(self, eval_app, executable):
-    self.exec_app = eval_app
-    self.exec_name = executable
+  def createJob(self,
+                dataset_name,
+                results_folder,
+                experiment_dict,
+                parameter_name,
+                parameter_dict,
+                summarize_statistics=False):
+    self.job_path = os.path.join(results_folder,
+                                 experiment_dict['experiment_name'])
+    self.logger.info("==> Creating job:in folder '{}'".format(self.job_path))
+    if not os.path.exists(self.job_path):
+      os.makedirs(self.job_path)
+    else:
+      self.logger.info("Job folder already exists '{}'".format(self.job_path))
 
-  def setPythonExecutable(self, executable):
-    self.exec_app = None
-    self.exec_name = executable
+    self.dataset_name = dataset_name
+    self.sensors_file = experiment_dict['sensors_file']
+    self.localization_map = experiment_dict['localization_map']
+    self.output_map_key = os.path.basename(self.dataset_name).replace(
+        '.bag', '')
+    self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
+
+    self.params_dict = copy.deepcopy(parameter_dict)
+    for key, value in self.params_dict.items():
+      if isinstance(value, str):
+        self.params_dict[key] = self.replacePlaceholdersInString(value)
+
+    # We do not want to pass parameter_sweep as an argument to the executable.
+    if 'parameter_sweep' in self.params_dict:
+      del self.params_dict['parameter_sweep']
+    if summarize_statistics:
+      # TODO(eggerk): generalize or remove.
+      self.params_dict['swe_write_statistics_to_file'] = 1
+
+    # Prepare options to write to file.
+    self.info = copy.deepcopy(experiment_dict)
+    self.info['dataset'] = dataset_name
+    self.info['parameter_file'] = parameter_name
+    self.info['parameters'] = self.params_dict
+    del self.info['parameter_files']
+    del self.info['datasets']
+
+    # Write console batch runner file.
+    if 'console_commands' in experiment_dict and \
+        len( experiment_dict['console_commands']) > 0:
+      console_batch_runner_settings = {
+          "vi_map_folder_paths": [self.output_map_folder],
+          "commands": []
+      }
+      for command in experiment_dict['console_commands']:
+        if isinstance(command, str):
+          console_batch_runner_settings['commands'].append(
+              self.replacePlaceholdersInString(command))
+      del self.info['console_commands']
+
+      console_batch_runner_filename = os.path.join(self.job_path,
+                                                   "console_commands.yaml")
+      self.logger.info("Write " + console_batch_runner_filename)
+      with open(console_batch_runner_filename, "w") as out_file_stream:
+        yaml.dump(
+            console_batch_runner_settings,
+            stream=out_file_stream,
+            default_flow_style=False,
+            width=10000)  # Prevent random line breaks in long strings.
+
+    job_filename = os.path.join(self.job_path, "job.yaml")
+    self.logger.info("Write " + job_filename)
+    with open(job_filename, "w") as out_file_stream:
+      yaml.dump(self.info, stream=out_file_stream, default_flow_style=False)
+
+    self.exec_app = self.info["app_package_name"]
+    self.exec_name = self.info["app_executable"]
+    self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
+    self.exec_path = os.path.join(self.exec_folder, self.exec_name)
+
+  def replacePlaceholdersInString(self, string):
+    string = string.replace('<LOG_DIR>', self.job_path)
+    string = string.replace('<SENSORS_YAML>', self.sensors_file)
+    string = string.replace('<BAG_FILENAME>', self.dataset_name)
+    string = string.replace('<LOCALIZATION_MAP>', self.localization_map)
+    string = string.replace('<OUTPUT_MAP_FOLDER>', self.output_map_folder)
+    string = string.replace('<OUTPUT_MAP_KEY>', self.output_map_key)
+    string = string.replace('<OUTPUT_DIR>', self.job_path)
+    return string
 
   def loadConfigFromFolder(self, job_path):
     self.job_path = job_path
@@ -36,51 +114,28 @@ class Job(object):
     self.exec_app = self.info["app_package_name"]
     self.exec_name = self.info["app_executable"]
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
-    self.exec_path = os.path.join(self.exec_folder, self.info["app_executable"])
+    self.exec_path = os.path.join(self.exec_folder, self.exec_name)
 
     if 'parameters' in self.info:
       self.params_dict = self.info['parameters']
 
-  def addParam(self, key, value):
-    self.params_dict[key] = value
-
-  def _getCmdSeq(self):
-    cmd_seq = []
-    if self.exec_name.endswith('.py'):
-      if self.exec_app is None:
-        cmd_seq.append('python')
-      else:
-        cmd_seq.append('rosrun')
-        cmd_seq.append(self.exec_app)
-
-      cmd_seq.append(self.exec_name)
-    else:
-      if os.path.isfile(self.exec_path):
-        cmd_seq.append(self.exec_path)
-      else:
-        cmd_seq.append(self.exec_name)
-    for param in self.params_dict:
-      cmd_seq.append("--" + param + "=" + str(self.params_dict[param]))
-    return cmd_seq
-
   def execute(self):
     # Run estimator.
-    cmd_seq = self._getCmdSeq()
-    self.logger.info("Executing command {}".format(cmd_seq))
-    cmd_string = ""
-    for cmd in cmd_seq:
-      cmd_string = cmd_string + cmd + " "
-    self.logger.info("Executing command: " + cmd_string)
-    os.system(cmd_string)
+    cmd_runner = CommandRunner(self.exec_path, params_dict=self.params_dict)
+    cmd_runner.execute()
 
     # Run console commands.
     batch_runner_settings_file = os.path.join(self.job_path,
                                               "console_commands.yaml")
     if os.path.isfile(batch_runner_settings_file):
-      console_cmd_string = "rosrun maplab_console batch_runner --log_dir " + \
-          self.job_path + " --batch_control_file " + batch_runner_settings_file
-      self.logger.info("Executing command: " + console_cmd_string)
-      os.system(console_cmd_string)
+      console_executable_path = catkin_utils.catkinFindLib("maplab_console")
+      cmd_runner = CommandRunner(
+          os.path.join(console_executable_path, "batch_runner"),
+          params_dict={
+              "log_dir": self.job_path,
+              "batch_control_file": batch_runner_settings_file
+          })
+      cmd_runner.execute()
     else:
       self.logger.info("No console commands to be run.")
 
@@ -102,87 +157,6 @@ class Job(object):
     out_file_path = os.path.join(self.job_path, filename)
     out_file_stream = open(out_file_path, "w")
     yaml.dump(summary_dict, stream=out_file_stream, default_flow_style=False)
-
-
-def createJobFolder(dataset_name,
-                    results_folder,
-                    experiment_dict,
-                    parameter_name,
-                    parameter_dict,
-                    summarize_statistics=False):
-  logging.basicConfig(level=logging.DEBUG)
-  logger = logging.getLogger("createJobFolder")
-  job_folder = str(
-      os.path.join(results_folder, experiment_dict['experiment_name']))
-  logger.info("==> Creating job folder '{}'".format(job_folder))
-  if not os.path.exists(job_folder):
-    os.makedirs(job_folder)
-  else:
-    logger.info("Job folder already exists '{}'".format(job_folder))
-
-  # Replace variables in parameters:
-  job_parameters = copy.deepcopy(parameter_dict)
-  job_parameters['log_dir'] = job_folder
-  output_map_key = os.path.basename(dataset_name).replace('.bag', '')
-  output_map_folder = os.path.join(job_folder, output_map_key)
-  for key, value in job_parameters.items():
-    if isinstance(value, str):
-      value = value.replace('<LOG_DIR>', job_folder)
-      value = value.replace('<SENSORS_YAML>', experiment_dict['sensors_file'])
-      value = value.replace('<BAG_FILENAME>', dataset_name)
-      value = value.replace('<LOCALIZATION_MAP>',
-                            experiment_dict['localization_map'])
-      value = value.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
-      value = value.replace('<OUTPUT_DIR>', job_folder)
-      job_parameters[key] = value
-
-  # We do not want to pass parameter_sweep as an argument to the executable
-  if 'parameter_sweep' in job_parameters:
-    del job_parameters['parameter_sweep']
-  if summarize_statistics:
-    job_parameters['swe_write_statistics_to_file'] = 1
-
-  # Write options to file.
-  job_settings = copy.deepcopy(experiment_dict)
-  job_settings['parameter_file'] = parameter_name
-  job_settings['dataset'] = dataset_name
-  job_settings['parameters'] = job_parameters
-  del job_settings['parameter_files']
-  del job_settings['datasets']
-
-  # Write console batch runner file.
-  if 'console_commands' in experiment_dict and len(
-      experiment_dict['console_commands']) > 0:
-    console_batch_runner_settings = {
-        "vi_map_folder_paths": [output_map_folder],
-        "commands": []
-    }
-    for command in experiment_dict['console_commands']:
-      if isinstance(command, str):
-        command = command.replace('<LOG_DIR>', job_folder)
-        command = command.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
-        command = command.replace('<OUTPUT_MAP_KEY>', output_map_key)
-        console_batch_runner_settings['commands'].append(command)
-        command = command.replace('<OUTPUT_DIR>', job_folder)
-    del job_settings['console_commands']
-
-    console_batch_runner_filename = os.path.join(job_folder,
-                                                 "console_commands.yaml")
-    logger.info("Write " + console_batch_runner_filename)
-    with open(console_batch_runner_filename, "w") as out_file_stream:
-      print console_batch_runner_settings
-      yaml.dump(
-          console_batch_runner_settings,
-          stream=out_file_stream,
-          default_flow_style=False,
-          width=10000)  # Prevent random line breaks in long strings.
-
-  job_filename = os.path.join(job_folder, "job.yaml")
-  logger.info("Write " + job_filename)
-  with open(job_filename, "w") as out_file_stream:
-    yaml.dump(job_settings, stream=out_file_stream, default_flow_style=False)
-
-  return job_folder
 
 
 if __name__ == '__main__':

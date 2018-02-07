@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from evaluation import Evaluation
-from job import Job, createJobFolder
+from job import Job
 from preprocessing import Preprocessing
 from simple_summarization import SimpleSummarization
 import argparse
@@ -147,7 +147,7 @@ class Experiment(object):
                                    filename))
 
     # Create jobs for all dataset-parameter file combination.
-    self.job_paths = []
+    self.job_list = []
     for dataset in self.datasets:
       for parameter_file in self.parameter_files:
         params = yaml.safe_load(open(parameter_file))
@@ -169,13 +169,14 @@ class Experiment(object):
                 .replace('.yaml', '') + '__SWEEP_' + str(step))
 
             parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
-            self.job_paths.append(
-                createJobFolder(
-                    dataset_name=str(dataset),
-                    results_folder=self.results_folder,
-                    experiment_dict=self.eval_dict,
-                    parameter_name=parameter_tag,
-                    parameter_dict=params))
+            job = Job()
+            job.createJob(
+                dataset_name=str(dataset),
+                results_folder=self.results_folder,
+                experiment_dict=self.eval_dict,
+                parameter_name=parameter_tag,
+                parameter_dict=params)
+            self.job_list.append(job)
             p_current += p_step_size
             step += 1
         else:
@@ -184,31 +185,30 @@ class Experiment(object):
               os.path.basename(dataset).replace('.bag', '') + '__' +
               os.path.basename(parameter_file).replace('.yaml', ''))
 
-          self.job_paths.append(
-              createJobFolder(
-                  dataset_name=str(dataset),
-                  results_folder=self.results_folder,
-                  experiment_dict=self.eval_dict,
-                  parameter_name=str(parameter_file),
-                  parameter_dict=params))
+          job = Job()
+          job.createJob(
+              dataset_name=str(dataset),
+              results_folder=self.results_folder,
+              experiment_dict=self.eval_dict,
+              parameter_name=str(parameter_file),
+              parameter_dict=params)
+          self.job_list.append(job)
 
   def preprocessing(self):
-    for job_path in self.job_paths:
-      self.logger.info("Preprocessing: " + job_path)
-      j = Preprocessing(job_path)
-      j.run_preprocessing()
+    for job in self.job_list:
+      self.logger.info("Preprocessing: " + job.job_path)
+      preprocessing = Preprocessing(job.job_path)
+      preprocessing.run_preprocessing()
 
   def runAndEvaluate(self):
-    for job_path in self.job_paths:
-      self.logger.info("Run job: " + job_path + "/job.yaml")
-      j = Job()
-      j.loadConfigFromFolder(job_path)
-      j.execute()
-      j.writeSummary("job_summary.yaml")
+    for job in self.job_list:
+      self.logger.info("Run job: " + job.job_path + "/job.yaml")
+      job.execute()
+      job.writeSummary("job_summary.yaml")
 
-      self.logger.info("Run evaluation: " + job_path)
-      j = Evaluation(job_path, self.root_folder)
-      j.runEvaluations()
+      self.logger.info("Run evaluation: " + job.job_path)
+      evaluation = Evaluation(job.job_path, self.root_folder)
+      evaluation.runEvaluations()
 
   def runSummarization(self):
     if self.summarize_statistics:
@@ -222,8 +222,8 @@ class Experiment(object):
             'blacklisted_metrics']
 
       files_to_summarize = []
-      for job_path in self.job_paths:
-        files_to_summarize.append(job_path + "/formatted_stats.yaml")
+      for job in self.job_list:
+        files_to_summarize.append(job.job_path + "/formatted_stats.yaml")
 
       s = SimpleSummarization(files_to_summarize, whitelist, blacklist)
       s.runSummarization()

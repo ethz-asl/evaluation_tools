@@ -5,8 +5,8 @@ import yaml
 import argparse
 import logging
 import utils as eval_utils
-from job import Job
 import IPython
+from command_runner import CommandRunner
 
 
 class Evaluation(object):
@@ -39,15 +39,17 @@ class Evaluation(object):
       evaluation_script_with_path = eval_utils.findFileOrDir(
           self.root_folder, "evaluation", evaluation_script)
 
-      jp = Job()
-      jp.setPythonExecutable(evaluation_script_with_path)
-      jp.addParam("data_dir", self.job_dir)
-      jp.addParam("localization_map", self.job["localization_map"])
+      params_dict = {
+          "data_dir": self.job_dir,
+          "localization_map": self.job['localization_map']
+      }
       if "parameter_file" in self.job:
-        jp.addParam("parameter_file", self.job["parameter_file"])
+        params_dict["parameter_file"] = self.job["parameter_file"]
       if "dataset" in self.job:
-        jp.addParam("dataset", self.job["dataset"])
-      jp.execute()
+        params_dict["dataset"] = self.job["dataset"]
+      cmd_runner = CommandRunner(
+          evaluation_script_with_path, params_dict=params_dict)
+      cmd_runner.execute()
 
 
 if __name__ == '__main__':
