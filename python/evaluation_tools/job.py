@@ -63,6 +63,7 @@ class Job(object):
     return cmd_seq
 
   def execute(self):
+    # Run estimator.
     cmd_seq = self._getCmdSeq()
     self.logger.info("Executing command {}".format(cmd_seq))
     cmd_string = ""
@@ -70,6 +71,17 @@ class Job(object):
       cmd_string = cmd_string + cmd + " "
     self.logger.info("Executing command: " + cmd_string)
     os.system(cmd_string)
+
+    # Run console commands.
+    batch_runner_settings_file = os.path.join(self.job_path,
+                                              "console_commands.yaml")
+    if os.path.isfile(batch_runner_settings_file):
+      console_cmd_string = "rosrun maplab_console batch_runner --log_dir " + \
+          self.job_path + " --batch_control_file " + batch_runner_settings_file
+      self.logger.info("Executing command: " + console_cmd_string)
+      os.system(console_cmd_string)
+    else:
+      self.logger.info("No console commands to be run.")
 
   def writeSummary(self, filename):
     summary_dict = {}
