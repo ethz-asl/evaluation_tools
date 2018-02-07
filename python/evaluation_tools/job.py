@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-import IPython
 import argparse
 import catkin_utils
+from command_runner import runCommand
 import copy
 import logging
 import os
+import re
 import yaml
-from command_runner import runCommand
 
 
 class Job(object):
@@ -131,6 +131,13 @@ class Job(object):
     string = string.replace('<OUTPUT_MAP_FOLDER>', self.output_map_folder)
     string = string.replace('<OUTPUT_MAP_KEY>', self.output_map_key)
     string = string.replace('<OUTPUT_DIR>', self.job_path)
+
+    # Check that no substrings in the form of <...> are left.
+    regex_result = re.search('<.*>', string)
+    if regex_result:
+      raise Exception(
+          'Replacing of placeholders did not complete: invalid placeholder "' +
+          regex_result.group() + '" found. Resulting string: ' + string)
     return string
 
   def loadConfigFromFolder(self, job_path):

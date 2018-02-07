@@ -40,10 +40,6 @@ def runCommand(exec_path, params_dict={}):
 
   return_value = os.system(cmd_string)
   if return_value != 0:
-    print "(Note: if you're getting an error in the form of \"cannot open " \
-        'SOMETHING: No such file", a placeholder value might not have been ' \
-        'properly replaced. Check your input yamls for string containing ' \
-        '"<SOMETHING>" and ensure that they will get replaced.)'
     raise Exception(
         'Command "' + cmd_string + '" returned with a non-zero exit code: ' +
         str(return_value))
