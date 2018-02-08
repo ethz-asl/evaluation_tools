@@ -52,6 +52,8 @@ class Evaluation(object):
           "localization_map": self.job['localization_map']
       }
       params_dict.update(self.job['dataset_additional_parameters'])
+      if 'arguments' in evaluation:
+        params_dict.update(evaluation['arguments'])
       if "parameter_file" in self.job:
         params_dict["parameter_file"] = self.job["parameter_file"]
       if "dataset" in self.job:

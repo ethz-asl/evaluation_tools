@@ -16,6 +16,9 @@ def runCommand(exec_path, params_dict={}):
   that is executed will be of the form:
     <exec_path> --<key1>=<value1> --<key2>=<value2> ...
 
+  Note: if <value> contains a space, the key-value pair will be appended as
+  '--<key> <value>'. This is to support the nargs option of Python's argparse.
+
   If no file under exec_path can be found or the command returns a non-zero exit
   code, an exception will be raised.
   """
@@ -28,7 +31,16 @@ def runCommand(exec_path, params_dict={}):
     raise ValueError("No file under " + exec_path + " exists.")
 
   for param in params_dict:
-    cmd_seq.append("--" + param + "=" + str(params_dict[param]))
+    param_value = str(params_dict[param])
+    if ' ' not in param_value:
+      # Use '--name=value' per default because gflags doesn't recognize spaces
+      # (as in '--name value') in some case (bool flags).
+      separator = '='
+    else:
+      # Don't use '=' as separator if the value contains spaces to support
+      # Python argparse's nargs option.
+      separator = ' '
+    cmd_seq.append("--" + param + separator + param_value)
 
   logging.basicConfig(level=logging.DEBUG)
   logger = logging.getLogger(__name__)
