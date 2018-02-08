@@ -116,17 +116,13 @@ class Experiment(object):
           })
 
     # Create set of datasets and download them if needed.
-    self.datasets = []
     local_dataset_dir = datasets.getLocalDatasetsFolder()
     available_datasets = datasets.getDatasetList()
     downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
     for dataset in self.eval_dict['datasets']:
       # Check if dataset is available:
       dataset_path, dataset_name = os.path.split(dataset['name'])
-      if not dataset_path == '' and os.path.isfile(dataset['name']):
-        # Local path.
-        self.datasets.append(dataset['name'])
-      else:
+      if dataset_path == '' or not os.path.isfile(dataset['name']):
         if dataset['name'] not in downloaded_datasets:
           self.logger.info(
               "Dataset '" + dataset['name'] + "' is not available.")
@@ -149,7 +145,7 @@ class Experiment(object):
         if not os.path.isfile(dataset_path):
           raise Exception(
               "Unable to obtain the dataset " + dataset['name'] + ".")
-        self.datasets.append(dataset_path)
+        dataset['name'] = dataset_path
 
     # Create set of parameter files
     self.parameter_files = set()
@@ -160,7 +156,7 @@ class Experiment(object):
 
     # Create jobs for all dataset-parameter file combination.
     self.job_list = []
-    for dataset in self.datasets:
+    for dataset in self.eval_dict['datasets']:
       for parameter_file in self.parameter_files:
         params = yaml.safe_load(open(parameter_file))
 
@@ -176,14 +172,14 @@ class Experiment(object):
           while p_current <= p_max and step < max_steps:
             params[p_name] = p_current
             self.eval_dict['experiment_name'] = str(
-                experiment_basename + '/' + os.path.basename(dataset).replace(
-                    '.bag', '') + '__' + os.path.basename(parameter_file)
+                experiment_basename + '/' + os.path.basename(dataset['name'])
+                .replace('.bag', '') + '__' + os.path.basename(parameter_file)
                 .replace('.yaml', '') + '__SWEEP_' + str(step))
 
             parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
             job = Job()
             job.createJob(
-                dataset_name=str(dataset),
+                dataset_dict=dataset,
                 results_folder=self.results_folder,
                 experiment_dict=self.eval_dict,
                 parameter_name=parameter_tag,
@@ -194,12 +190,12 @@ class Experiment(object):
         else:
           self.eval_dict['experiment_name'] = str(
               experiment_basename + '/' +
-              os.path.basename(dataset).replace('.bag', '') + '__' +
+              os.path.basename(dataset['name']).replace('.bag', '') + '__' +
               os.path.basename(parameter_file).replace('.yaml', ''))
 
           job = Job()
           job.createJob(
-              dataset_name=str(dataset),
+              dataset_dict=dataset,
               results_folder=self.results_folder,
               experiment_dict=self.eval_dict,
               parameter_name=str(parameter_file),
