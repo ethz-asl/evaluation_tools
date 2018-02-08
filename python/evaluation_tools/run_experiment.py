@@ -2,7 +2,6 @@
 
 from evaluation import Evaluation
 from job import Job
-from preprocessing import Preprocessing
 from simple_summarization import SimpleSummarization
 import argparse
 import catkin_utils
@@ -207,13 +206,6 @@ class Experiment(object):
               parameter_dict=params)
           self.job_list.append(job)
 
-  def preprocessing(self):
-    """Run preprocessing scripts for this experiment."""
-    for job in self.job_list:
-      self.logger.info("Preprocessing: " + job.job_path)
-      preprocessing = Preprocessing(job.job_path)
-      preprocessing.run_preprocessing()
-
   def runAndEvaluate(self):
     """Run estimator and console commands and all evaluation scripts."""
     for job in self.job_list:
@@ -273,9 +265,6 @@ if __name__ == '__main__':
 
   # Create experiment folders.
   e = Experiment(eval_file, args.results_output_folder, args.automatic_download)
-
-  # Run Preprocessing
-  e.preprocessing()
 
   # Run each job and the evaluation of each job.
   e.runAndEvaluate()
