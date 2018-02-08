@@ -210,5 +210,5 @@ if __name__ == '__main__':
 
   if args.job_dir:
     j = Job()
-    j.load_config_from_folder(args.job_dir)
+    j.loadConfigFromFolder(args.job_dir)
     j.execute()
