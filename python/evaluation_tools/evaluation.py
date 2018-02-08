@@ -34,17 +34,18 @@ class Evaluation(object):
     for evaluation in self.evaluation_scripts:
       self.logger.info("=== Run Evaluation ===")
       if 'name' in evaluation:
-        evaluation_script = evaluation['name']
-        evaluation_script_with_path = eval_utils.findFileOrDir(
-            self.root_folder, "evaluation", evaluation_script)
-      elif 'package' in evaluation and 'executable' in evaluation:
-        package_path = catkin_utils.catkinFindLib(evaluation['package'])
-        evaluation_script_with_path = os.path.join(
-            package_path, evaluation['executable'])
+        if 'package' in evaluation:
+          package_path = catkin_utils.catkinFindLib(evaluation['package'])
+          evaluation_script_with_path = os.path.join(
+              package_path, evaluation['name'])
+        else:
+          evaluation_script = evaluation['name']
+          evaluation_script_with_path = eval_utils.findFileOrDir(
+              self.root_folder, "evaluation", evaluation_script)
       else:
         raise Exception(
-            'Please either provide a "name" entry or a "package" and '
-            '"executable" entry in the evaluation script listing.')
+            'Please provide a "name" entry and optionally a "package" entry in '
+            'the evaluation script listing.')
 
       params_dict = {
           "data_dir": self.job_dir,
