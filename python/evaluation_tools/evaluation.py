@@ -51,7 +51,10 @@ class Evaluation(object):
           "data_dir": self.job_dir,
           "localization_map": self.job['localization_map']
       }
-      params_dict.update(self.job['dataset_additional_parameters'])
+      additional_dataset_parameters_str = yaml.dump(
+          self.job['dataset_additional_parameters'], width=10000)
+      params_dict['additional_dataset_parameters'] = \
+          '"' + additional_dataset_parameters_str + '"'
       if 'arguments' in evaluation:
         params_dict.update(evaluation['arguments'])
       if "parameter_file" in self.job:
