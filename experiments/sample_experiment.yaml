@@ -22,9 +22,6 @@ datasets:
 - name: 20161121_113921.bag
 
 ## Optional parameters ##
-# Preprocessing scripts
-preprocessing_scripts:
-
 # Evaluation scripts
 evaluation_scripts:
 

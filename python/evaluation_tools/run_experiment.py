@@ -2,11 +2,9 @@
 
 from evaluation import Evaluation
 from job import Job
-from preprocessing import Preprocessing
 from simple_summarization import SimpleSummarization
 import argparse
 import catkin_utils
-import copy
 import datasets
 import IPython
 import logging
@@ -19,9 +17,22 @@ import yaml
 
 
 class Experiment(object):
+  """Main class for running an evaluation experiment."""
 
   def __init__(self, experiment_file, results_folder,
                automatic_dataset_download):
+    """Initializes the experiment.
+
+    Loads and parses the yaml and creates the corresponding job objects to be
+    run at a later stage.
+
+    Input:
+    - experiment_file: yaml with the experiment info.
+    - results_folder: folder where the results of the evaluation are stored.
+    - automatic_dataset_download: if True, datasets that cannot be found on
+          disk will be automatically retrieved from a remote location as
+          specified in the datasets yaml.
+    """
     logging.basicConfig(level=logging.DEBUG)
     self.logger = logging.getLogger(__name__)
 
@@ -95,7 +106,7 @@ class Experiment(object):
         if self.eval_dict['summarize_statistics']['enabled']:
           self.summarize_statistics = True
           # Summarization requires that each job runs the prepare_statistics.py
-          # script after execution
+          # script after execution.
           if 'evaluation_scripts' not in self.eval_dict or \
               self.eval_dict['evaluation_scripts'] is None:
             self.eval_dict['evaluation_scripts'] = []
@@ -148,7 +159,7 @@ class Experiment(object):
                                    filename))
 
     # Create jobs for all dataset-parameter file combination.
-    self.job_paths = []
+    self.job_list = []
     for dataset in self.datasets:
       for parameter_file in self.parameter_files:
         params = yaml.safe_load(open(parameter_file))
@@ -170,8 +181,14 @@ class Experiment(object):
                 .replace('.yaml', '') + '__SWEEP_' + str(step))
 
             parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
-            self.job_paths.append(
-                self._createJobFolder(params, str(dataset), parameter_tag))
+            job = Job()
+            job.createJob(
+                dataset_name=str(dataset),
+                results_folder=self.results_folder,
+                experiment_dict=self.eval_dict,
+                parameter_name=parameter_tag,
+                parameter_dict=params)
+            self.job_list.append(job)
             p_current += p_step_size
             step += 1
         else:
@@ -180,110 +197,25 @@ class Experiment(object):
               os.path.basename(dataset).replace('.bag', '') + '__' +
               os.path.basename(parameter_file).replace('.yaml', ''))
 
-          self.job_paths.append(
-              self._createJobFolder(params, str(dataset), str(parameter_file)))
-
-  def _createJobFolder(self, parameters, dataset_name, parameter_file):
-    job_folder = str(
-        os.path.join(self.results_folder, self.eval_dict['experiment_name']))
-    self.logger.info("==> Creating job folder '{}'".format(job_folder))
-    if not os.path.exists(job_folder):
-      os.makedirs(job_folder)
-    else:
-      self.logger.info("Job folder already exists '{}'".format(job_folder))
-
-    # Replace variables in parameters:
-    job_parameters = copy.deepcopy(parameters)
-    job_parameters['log_dir'] = job_folder
-    output_map_key = os.path.basename(dataset_name).replace('.bag', '')
-    output_map_folder = os.path.join(job_folder, output_map_key)
-    for key, value in job_parameters.items():
-      if isinstance(value, str):
-        value = value.replace('<LOG_DIR>', job_folder)
-        value = value.replace('<SENSORS_YAML>', self.eval_dict['sensors_file'])
-        value = value.replace('<BAG_FILENAME>', dataset_name)
-        value = value.replace('<LOCALIZATION_MAP>',
-                              self.eval_dict['localization_map'])
-        value = value.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
-        value = value.replace('<OUTPUT_DIR>', job_folder)
-        job_parameters[key] = value
-
-    # We do not want to pass parameter_sweep as an argument to the executable
-    if 'parameter_sweep' in job_parameters:
-      del job_parameters['parameter_sweep']
-    if self.summarize_statistics:
-      job_parameters['swe_write_statistics_to_file'] = 1
-
-    # Write options to file.
-    job_settings = copy.deepcopy(self.eval_dict)
-    job_settings['parameter_file'] = parameter_file
-    job_settings['dataset'] = dataset_name
-    job_settings['parameters'] = job_parameters
-    del job_settings['parameter_files']
-    del job_settings['datasets']
-
-    # Write console batch runner file.
-    if 'console_commands' in self.eval_dict and len(
-        self.eval_dict['console_commands']) > 0:
-      console_batch_runner_settings = {
-          "vi_map_folder_paths": [output_map_folder],
-          "commands": []
-      }
-      for command in self.eval_dict['console_commands']:
-        if isinstance(command, str):
-          command = command.replace('<LOG_DIR>', job_folder)
-          command = command.replace('<OUTPUT_MAP_FOLDER>', output_map_folder)
-          command = command.replace('<OUTPUT_MAP_KEY>', output_map_key)
-          command = command.replace('<OUTPUT_DIR>', job_folder)
-          console_batch_runner_settings['commands'].append(command)
-      del job_settings['console_commands']
-
-      console_batch_runner_filename = os.path.join(job_folder,
-                                                   "console_commands.yaml")
-      self.logger.info("Write " + console_batch_runner_filename)
-      with open(console_batch_runner_filename, "w") as out_file_stream:
-        print console_batch_runner_settings
-        yaml.dump(
-            console_batch_runner_settings,
-            stream=out_file_stream,
-            default_flow_style=False,
-            width=10000)  # Prevent random line breaks in long strings.
-
-    job_filename = os.path.join(job_folder, "job.yaml")
-    self.logger.info("Write " + job_filename)
-    with open(job_filename, "w") as out_file_stream:
-      yaml.dump(job_settings, stream=out_file_stream, default_flow_style=False)
-
-    # Copy groundtruth if available
-    # if self.dataset_type == 'rosbag':
-    #  gt_filename = self.eval_dict['dataset'].replace('.bag','_groundtruth.csv')
-    # else:
-    #  gt_filename = os.path.join(self.eval_dict['dataset'], 'groundtruth.csv')
-    # if os.path.isfile(gt_filename):
-    #  gt_filename_copied = os.path.join(job_folder, 'traj_gt.csv')
-    #  self.logger.info('Copy groundtruth ' + gt_filename + ' to job folder: ' \
-    #                   + gt_filename_copied)
-    #  shutil.copyfile(gt_filename, gt_filename_copied)
-
-    return job_folder
-
-  def preprocessing(self):
-    for job_path in self.job_paths:
-      self.logger.info("Preprocessing: " + job_path)
-      j = Preprocessing(job_path)
-      j.run_preprocessing()
+          job = Job()
+          job.createJob(
+              dataset_name=str(dataset),
+              results_folder=self.results_folder,
+              experiment_dict=self.eval_dict,
+              parameter_name=str(parameter_file),
+              parameter_dict=params)
+          self.job_list.append(job)
 
   def runAndEvaluate(self):
-    for job_path in self.job_paths:
-      self.logger.info("Run job: " + job_path + "/job.yaml")
-      j = Job()
-      j.loadConfigFromFolder(job_path)
-      j.execute()
-      j.writeSummary("job_summary.yaml")
+    """Run estimator and console commands and all evaluation scripts."""
+    for job in self.job_list:
+      self.logger.info("Run job: " + job.job_path + "/job.yaml")
+      job.execute()
+      job.writeSummary("job_summary.yaml")
 
-      self.logger.info("Run evaluation: " + job_path)
-      j = Evaluation(job_path, self.root_folder)
-      j.runEvaluations()
+      self.logger.info("Run evaluation: " + job.job_path)
+      evaluation = Evaluation(job.job_path, self.root_folder)
+      evaluation.runEvaluations()
 
   def runSummarization(self):
     if self.summarize_statistics:
@@ -297,15 +229,14 @@ class Experiment(object):
             'blacklisted_metrics']
 
       files_to_summarize = []
-      for job_path in self.job_paths:
-        files_to_summarize.append(job_path + "/formatted_stats.yaml")
+      for job in self.job_list:
+        files_to_summarize.append(job.job_path + "/formatted_stats.yaml")
 
       s = SimpleSummarization(files_to_summarize, whitelist, blacklist)
       s.runSummarization()
 
 
 if __name__ == '__main__':
-
   logging.basicConfig(level=logging.DEBUG)
   logger = logging.getLogger(__name__)
   logger.info('Experiment started')
@@ -334,9 +265,6 @@ if __name__ == '__main__':
 
   # Create experiment folders.
   e = Experiment(eval_file, args.results_output_folder, args.automatic_download)
-
-  # Run Preprocessing
-  e.preprocessing()
 
   # Run each job and the evaluation of each job.
   e.runAndEvaluate()

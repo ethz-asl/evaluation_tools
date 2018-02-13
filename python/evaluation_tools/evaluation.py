@@ -5,8 +5,8 @@ import yaml
 import argparse
 import logging
 import utils as eval_utils
-from job import Job
 import IPython
+from command_runner import runCommand
 
 
 class Evaluation(object):
@@ -33,21 +33,29 @@ class Evaluation(object):
   def runEvaluations(self):
     for evaluation in self.evaluation_scripts:
       self.logger.info("=== Run Evaluation ===")
-      if 'name' not in evaluation:
-        raise Exception("Missing name tag")
-      evaluation_script = evaluation['name']
-      evaluation_script_with_path = eval_utils.findFileOrDir(
-          self.root_folder, "evaluation", evaluation_script)
+      if 'name' in evaluation:
+        if 'package' in evaluation:
+          package_path = catkin_utils.catkinFindLib(evaluation['package'])
+          evaluation_script_with_path = os.path.join(
+              package_path, evaluation['name'])
+        else:
+          evaluation_script = evaluation['name']
+          evaluation_script_with_path = eval_utils.findFileOrDir(
+              self.root_folder, "evaluation", evaluation_script)
+      else:
+        raise Exception(
+            'Please provide a "name" entry and optionally a "package" entry in '
+            'the evaluation script listing.')
 
-      jp = Job()
-      jp.setPythonExecutable(evaluation_script_with_path)
-      jp.addParam("data_dir", self.job_dir)
-      jp.addParam("localization_map", self.job["localization_map"])
+      params_dict = {
+          "data_dir": self.job_dir,
+          "localization_map": self.job['localization_map']
+      }
       if "parameter_file" in self.job:
-        jp.addParam("parameter_file", self.job["parameter_file"])
+        params_dict["parameter_file"] = self.job["parameter_file"]
       if "dataset" in self.job:
-        jp.addParam("dataset", self.job["dataset"])
-      jp.execute()
+        params_dict["dataset"] = self.job["dataset"]
+      runCommand(evaluation_script_with_path, params_dict=params_dict)
 
 
 if __name__ == '__main__':
