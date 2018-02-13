@@ -19,7 +19,7 @@ class Job(object):
     self.params_dict = {}
 
   def createJob(self,
-                dataset_name,
+                dataset_dict,
                 results_folder,
                 experiment_dict,
                 parameter_name,
@@ -56,7 +56,12 @@ class Job(object):
     else:
       self.logger.info("Job folder already exists '{}'".format(self.job_path))
 
-    self.dataset_name = dataset_name
+    self.dataset_name = dataset_dict['name']
+    self.dataset_additional_parameters = {}
+    if 'additional_parameters' in dataset_dict:
+      self.dataset_additional_parameters = dataset_dict['additional_parameters']
+
+    self.additional_dataset_parameters = []
     self.sensors_file = experiment_dict['sensors_file']
     self.localization_map = experiment_dict['localization_map']
     self.output_map_key = os.path.basename(self.dataset_name).replace(
@@ -99,7 +104,9 @@ class Job(object):
 
     # Write options to file.
     self.info = copy.deepcopy(experiment_dict)
-    self.info['dataset'] = dataset_name
+    self.info['dataset'] = self.dataset_name
+    self.info['dataset_additional_parameters'] = \
+        self.dataset_additional_parameters
     self.info['parameter_file'] = parameter_name
     self.info['parameters'] = self.params_dict
     del self.info['parameter_files']

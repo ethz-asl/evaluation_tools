@@ -31,6 +31,10 @@ class Evaluation(object):
       self.logger.info("No evaluation scripts in job.")
 
   def runEvaluations(self):
+    additional_dataset_parameters_str = yaml.dump(
+        self.job['dataset_additional_parameters'], width=10000)
+    additional_dataset_parameters_str = \
+        '"' + additional_dataset_parameters_str + '"'
     for evaluation in self.evaluation_scripts:
       self.logger.info("=== Run Evaluation ===")
       if 'name' in evaluation:
@@ -49,8 +53,11 @@ class Evaluation(object):
 
       params_dict = {
           "data_dir": self.job_dir,
-          "localization_map": self.job['localization_map']
+          "localization_map": self.job['localization_map'],
+          "additional_dataset_parameters": additional_dataset_parameters_str
       }
+      if 'arguments' in evaluation:
+        params_dict.update(evaluation['arguments'])
       if "parameter_file" in self.job:
         params_dict["parameter_file"] = self.job["parameter_file"]
       if "dataset" in self.job:
