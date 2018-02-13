@@ -7,17 +7,23 @@ import time
 import yaml
 import logging
 import tarfile
-import urllib2
+import urllib
 import hashlib
 import argparse
 import catkin_utils
 import IPython
 import shutil
+from utils import findFileOrDir
 
+
+root_folder = ''
 
 def getDatasetList():
   logger = logging.getLogger(__name__)
-  datasets_yaml = getLocalDatasetsFolder() + '/datasets.yaml'
+  try:
+    datasets_yaml = findFileOrDir(root_folder, 'datasets', 'datasets.yaml')
+  except:
+    datasets_yaml = getLocalDatasetsFolder() + '/datasets.yaml'
 
   if os.path.exists(datasets_yaml):
     dataset_list = yaml.load(open(datasets_yaml, 'r'))
@@ -28,8 +34,10 @@ def getDatasetList():
       if "name" not in dataset:
         logger.warning("Malformed dataset entry: 'name' key not found")
         continue
-      if "dir" not in dataset:
-        logger.warning("Malformed dataset entry: no 'dir' tag found.")
+      if "dir" not in dataset and "url" not in dataset and \
+          "webdir" not in dataset:
+        logger.warning("Malformed dataset entry: one of the tags 'dir', 'url' "
+                       "or 'webdir' need to be defined.")
         continue
       datasets[dataset["name"]] = dataset
     return datasets
@@ -101,7 +109,10 @@ def downloadFileFromServer(file_url, local_filename):
   logger = logging.getLogger(__name__)
   logger.info('Downloading file from server from {0}'.format(file_url))
   logger.info('to {0}'.format(local_filename))
-  urllib.request.urlretrieve(file_url, local_filename, _download_reporthook)
+  print 'file url', file_url
+  print 'local file name', local_filename
+  os.makedirs(os.path.dirname(local_filename))
+  urllib.urlretrieve(file_url, local_filename, _download_reporthook)
   logger.info('\ndone.')
   assert os.path.exists(local_filename)  #TODO(cfo): checksum
 
@@ -109,8 +120,8 @@ def downloadFileFromServer(file_url, local_filename):
 def validFileOnServer(filename):
   logger = logging.getLogger(__name__)
   try:
-    urllib.request.urlopen(filename)
-  except urllib.error.URLError as err:
+    urllib.urlopen(filename)
+  except urllib.URLError as err:
     logger.warning('We failed to load URL. Reason: {0}'.format(err.reason))
     return False
   except ValueError as err:
@@ -136,6 +147,20 @@ def getFileHash(filename):
   return file_hash
 
 
+def getPathForDataset(dataset_name):
+  downloaded_datasets, data_dir = getDownloadedDatasets()
+  assert dataset_name in downloaded_datasets
+  datasets = getDatasetList()
+  if dataset_name not in datasets:
+    raise ValueError(
+        'Dataset ' + dataset_name + ' is not listed in datasets.yaml')
+  dataset = datasets[dataset_name]
+  if 'file_name' in dataset:
+    return os.path.join(data_dir, dataset_name, dataset['file_name'])
+  else:
+    return os.path.join(data_dir, dataset_name)
+
+
 def downloadDataset(dataset_name, replace=False):
   logger = logging.getLogger(__name__)
 
@@ -150,7 +175,7 @@ def downloadDataset(dataset_name, replace=False):
 
   # Create target directory:
   local_data_dir = getLocalDatasetsFolder()
-  #dataset_dir = os.path.join(data_dir, dataset['name'])
+  dataset_dir = os.path.join(local_data_dir, dataset['name'])
   #if os.path.exists(dataset_dir):
   #    logger.warning("Dataset folder already exists: "+dataset_dir)
   #    if not replace:
@@ -166,7 +191,7 @@ def downloadDataset(dataset_name, replace=False):
   # Download zip from url
   if 'url' in dataset:
     # Download dataset files from server as specified in info YAML.
-    url = dataset['url'].replace('ZE_DATASET_SERVER', ZE_DATASET_SERVER)
+    url = dataset['url']
     filename = url.split('/')[-1]
     local_filename = os.path.join(dataset_dir, filename)
     if validFileOnServer(url):
@@ -198,7 +223,7 @@ def downloadDataset(dataset_name, replace=False):
   # -------------------------------------------------------------------------
   # Download a whole directory
   elif 'webdir' in dataset:
-    webdir = dataset['webdir'].replace("ZE_DATASET_SERVER", ZE_DATASET_SERVER)
+    webdir = dataset['webdir']
     filenames = extractListOfFilesFromOnlineDirectoryListing(webdir)
     for filename in filenames:
       url = os.path.join(webdir, filename)
@@ -219,6 +244,8 @@ def downloadDataset(dataset_name, replace=False):
     print 'Done.'
   else:
     raise Exception("Unclear how to download the dataset.")
+
+  return getPathForDataset(dataset_name)
 
 
 if __name__ == '__main__':

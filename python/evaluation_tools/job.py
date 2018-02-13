@@ -73,6 +73,11 @@ class Job(object):
       if isinstance(value, str):
         self.params_dict[key] = self.replacePlaceholdersInString(value)
 
+    for key, value in self.dataset_additional_parameters.iteritems():
+      if isinstance(value, str):
+        self.dataset_additional_parameters[key] = \
+            self.replacePlaceholdersInString(value)
+
     # We do not want to pass parameter_sweep as an argument to the executable.
     if 'parameter_sweep' in self.params_dict:
       del self.params_dict['parameter_sweep']
@@ -96,7 +101,7 @@ class Job(object):
                                                    "console_commands.yaml")
       self.logger.info("Write " + console_batch_runner_filename)
       with open(console_batch_runner_filename, "w") as out_file_stream:
-        yaml.dump(
+        yaml.safe_dump(
             console_batch_runner_settings,
             stream=out_file_stream,
             default_flow_style=False,
@@ -117,7 +122,8 @@ class Job(object):
     job_filename = os.path.join(self.job_path, "job.yaml")
     self.logger.info("Write " + job_filename)
     with open(job_filename, "w") as out_file_stream:
-      yaml.dump(self.info, stream=out_file_stream, default_flow_style=False)
+      yaml.safe_dump(
+          self.info, stream=out_file_stream, default_flow_style=False)
 
     self.exec_app = self.info["app_package_name"]
     self.exec_name = self.info["app_executable"]
@@ -134,6 +140,7 @@ class Job(object):
     string = string.replace('<LOG_DIR>', self.job_path)
     string = string.replace('<SENSORS_YAML>', self.sensors_file)
     string = string.replace('<BAG_FILENAME>', self.dataset_name)
+    string = string.replace('<BAG_FOLDER>', os.path.dirname(self.dataset_name))
     string = string.replace('<LOCALIZATION_MAP>', self.localization_map)
     string = string.replace('<OUTPUT_MAP_FOLDER>', self.output_map_folder)
     string = string.replace('<OUTPUT_MAP_KEY>', self.output_map_key)
@@ -204,7 +211,8 @@ class Job(object):
 
     out_file_path = os.path.join(self.job_path, filename)
     out_file_stream = open(out_file_path, "w")
-    yaml.dump(summary_dict, stream=out_file_stream, default_flow_style=False)
+    yaml.safe_dump(
+        summary_dict, stream=out_file_stream, default_flow_style=False)
 
 
 if __name__ == '__main__':
