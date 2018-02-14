@@ -54,6 +54,11 @@ class EvaluationDataCollectorImpl {
     channel_groups_.clear();
   }
 
+  // Check if EvaluationDataCollector is enabled or dummy implementation used.
+  static bool isEnabled() {
+    return true;
+  }
+
   //////////////////////////////////////////////////////////////
   /// \name Channel level operations
   /// @{
@@ -128,6 +133,11 @@ class EvaluationDataCollectorDummy {
     return instance;
   }
   void reset() {}
+
+  // Check if EvaluationDataCollector is enabled or dummy implementation used.
+  static bool isEnabled() {
+    return false;
+  }
 
   //////////////////////////////////////////////////////////////
   /// \name Channel level operations
