@@ -13,6 +13,7 @@ import os
 import shutil
 import time
 import utils as eval_utils
+from command_runner import CommandRunnerException
 import yaml
 
 
@@ -214,7 +215,12 @@ class Experiment(object):
     """Run estimator and console commands and all evaluation scripts."""
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
-      job.execute()
+      try:
+        job.execute()
+      except CommandRunnerException as ex:
+        self.evaluation_results[job.job_name] = {'_job': ex.return_value}
+        return
+
       job.writeSummary("job_summary.yaml")
 
       self.logger.info("Run evaluation: " + job.job_path)
