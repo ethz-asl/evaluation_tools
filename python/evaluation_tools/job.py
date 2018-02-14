@@ -48,8 +48,8 @@ class Job(object):
     This function needs to be called once per job so that all necessary files
     are created on disks.
     """
-    self.job_path = os.path.join(results_folder,
-                                 experiment_dict['experiment_name'])
+    self.job_name = experiment_dict['experiment_name']
+    self.job_path = os.path.join(results_folder, self.job_name)
     self.logger.info("==> Creating job:in folder '{}'".format(self.job_path))
     if not os.path.exists(self.job_path):
       os.makedirs(self.job_path)

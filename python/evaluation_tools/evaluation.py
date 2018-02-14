@@ -6,7 +6,7 @@ import argparse
 import logging
 import utils as eval_utils
 import IPython
-from command_runner import runCommand
+from command_runner import CommandRunnerException, runCommand
 
 
 class Evaluation(object):
@@ -31,6 +31,7 @@ class Evaluation(object):
       self.logger.info("No evaluation scripts in job.")
 
   def runEvaluations(self):
+    evaluation_script_results = {}
     additional_dataset_parameters_str = yaml.dump(
         self.job['dataset_additional_parameters'], width=10000)
     additional_dataset_parameters_str = \
@@ -62,7 +63,14 @@ class Evaluation(object):
         params_dict["parameter_file"] = self.job["parameter_file"]
       if "dataset" in self.job:
         params_dict["dataset"] = self.job["dataset"]
-      runCommand(evaluation_script_with_path, params_dict=params_dict)
+      try:
+        runCommand(evaluation_script_with_path, params_dict=params_dict)
+        evaluation_script_results[evaluation['name']] = 0
+      except CommandRunnerException as ex:
+        print "Evaluation exited with non-zero return value:", ex.return_value
+        evaluation_script_results[evaluation['name']] = ex.return_value
+
+    return evaluation_script_results
 
 
 if __name__ == '__main__':

@@ -45,6 +45,7 @@ class Experiment(object):
     self.root_folder = os.path.dirname(experiment_file)
     self.experiment_file = experiment_file
     self.results_folder = results_folder
+    self.evaluation_results = {}
 
     if not os.path.exists(self.results_folder):
       os.makedirs(self.results_folder)
@@ -218,7 +219,7 @@ class Experiment(object):
 
       self.logger.info("Run evaluation: " + job.job_path)
       evaluation = Evaluation(job.job_path, self.root_folder)
-      evaluation.runEvaluations()
+      self.evaluation_results[job.job_name] = evaluation.runEvaluations()
 
   def runSummarization(self):
     if self.summarize_statistics:
