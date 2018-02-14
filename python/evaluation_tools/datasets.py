@@ -20,10 +20,8 @@ root_folder = ''
 
 def getDatasetList():
   logger = logging.getLogger(__name__)
-  try:
-    datasets_yaml = findFileOrDir(root_folder, 'datasets', 'datasets.yaml')
-  except:
-    datasets_yaml = getLocalDatasetsFolder() + '/datasets.yaml'
+  datasets_folder = getLocalDatasetsFolder()
+  datasets_yaml = os.path.join(datasets_folder, 'datasets.yaml')
 
   if os.path.exists(datasets_yaml):
     dataset_list = yaml.load(open(datasets_yaml, 'r'))
@@ -45,8 +43,13 @@ def getDatasetList():
 
 
 def getLocalDatasetsFolder():
-  evaluation_folder = catkin_utils.catkinFindSrc("evaluation_tools")
-  return evaluation_folder + '/datasets'
+  try:
+    datasets_yaml = findFileOrDir(root_folder, 'datasets', 'datasets.yaml')
+    datasets_folder = os.path.dirname(datasets_yaml)
+  except:
+    datasets_folder = os.path.join(
+        catkin_utils.catkinFindSrc('evaluation_tools'), 'datasets')
+  return datasets_folder
 
 
 def getDownloadedDatasets():
