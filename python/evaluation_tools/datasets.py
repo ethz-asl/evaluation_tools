@@ -112,8 +112,6 @@ def downloadFileFromServer(file_url, local_filename):
   logger = logging.getLogger(__name__)
   logger.info('Downloading file from server from {0}'.format(file_url))
   logger.info('to {0}'.format(local_filename))
-  print 'file url', file_url
-  print 'local file name', local_filename
   os.makedirs(os.path.dirname(local_filename))
   urllib.urlretrieve(file_url, local_filename, _download_reporthook)
   logger.info('\ndone.')
