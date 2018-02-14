@@ -54,8 +54,8 @@ class EvaluationDataCollectorImpl {
     channel_groups_.clear();
   }
 
-  // Check if EvaluationDataCollector is enabled or dummy implementation used.
-  static bool isEnabled() {
+  // Check if EvaluationDataCollector is enabled or dummy implementation is used.
+  constexpr static bool isEnabled() {
     return true;
   }
 
@@ -134,8 +134,8 @@ class EvaluationDataCollectorDummy {
   }
   void reset() {}
 
-  // Check if EvaluationDataCollector is enabled or dummy implementation used.
-  static bool isEnabled() {
+  // Check if EvaluationDataCollector is enabled or dummy implementation is used.
+  constexpr static bool isEnabled() {
     return false;
   }
 
