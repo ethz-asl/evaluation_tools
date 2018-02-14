@@ -116,6 +116,7 @@ class Experiment(object):
           })
 
     # Create set of datasets and download them if needed.
+    datasets.root_folder = self.root_folder
     local_dataset_dir = datasets.getLocalDatasetsFolder()
     available_datasets = datasets.getDatasetList()
     downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
@@ -136,12 +137,18 @@ class Experiment(object):
             download = eval_utils.userYesNoQuery(
                 "Download datasets from server?")
           if download:
-            datasets.downloadDataset(dataset['name'])
+            print 'dataset[name]', dataset['name']
+            dataset['name'] = datasets.downloadDataset(dataset['name'])
+            print 'dataset[name]', dataset['name']
             available_datasets = datasets.getDatasetList()
             downloaded_datasets, local_dataset_dir = \
                 datasets.getDownloadedDatasets()
+        else:
+          # Get path for dataset.
+          dataset['name'] = datasets.getPathForDataset(dataset_name)
 
-        dataset_path = os.path.join(local_dataset_dir, dataset['name'])
+        dataset_path = dataset['name']
+        print 'dataset path', dataset_path
         if not os.path.isfile(dataset_path):
           raise Exception(
               "Unable to obtain the dataset " + dataset['name'] + ".")
