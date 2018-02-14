@@ -7,9 +7,8 @@ swe_cam_rate: 12.5
 swe_estimator_rate: 12
 swe_num_keyframes: 10
 swe_use_pose_odometry: true
-swe_rosbag_filename: BAG_FILENAME
-swe_calibration_yaml: NCAM_CALIB_FILENAME
-swe_additional_odometry_yaml: WHEEL_ODO_CALIB_FILENAME
+swe_rosbag_filename: <BAG_FILENAME>
+swe_sensors_yaml: <SENSORS_YAML>
 swe_visualization: 1
 swe_publish_pointcloud: 1
 gyro_noise_density: 1e-4

@@ -7,6 +7,6 @@ d = generate_distutils_setup(
     packages=['evaluation_tools'],
     package_dir={'': 'python'},
     install_requires=['yaml'],
-    )
+)
 
 setup(**d)
