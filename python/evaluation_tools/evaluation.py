@@ -5,7 +5,6 @@ import yaml
 import argparse
 import logging
 import utils as eval_utils
-import IPython
 from command_runner import CommandRunnerException, runCommand
 
 

@@ -11,7 +11,6 @@ import urllib
 import hashlib
 import argparse
 import catkin_utils
-import IPython
 import shutil
 from utils import findFileOrDir
 

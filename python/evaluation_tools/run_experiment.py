@@ -6,7 +6,6 @@ from simple_summarization import SimpleSummarization
 import argparse
 import catkin_utils
 import datasets
-import IPython
 import logging
 import numpy as np
 import os
