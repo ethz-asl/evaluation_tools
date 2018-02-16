@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import os
 import yaml
 import argparse
@@ -66,7 +68,14 @@ class Evaluation(object):
         runCommand(evaluation_script_with_path, params_dict=params_dict)
         evaluation_script_results[evaluation['name']] = 0
       except CommandRunnerException as ex:
-        print "Evaluation exited with non-zero return value:", ex.return_value
+        print(
+            'Evaluation "',
+            evaluation['name'],
+            '" from job "',
+            self.job['experiment_name'],
+            '" exited with non-zero return value: ',
+            ex.return_value,
+            sep='')
         evaluation_script_results[evaluation['name']] = ex.return_value
 
     return evaluation_script_results
