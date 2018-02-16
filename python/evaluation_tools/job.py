@@ -175,7 +175,7 @@ class Job(object):
     if 'parameters' in self.info:
       self.params_dict = self.info['parameters']
 
-  def execute(self):
+  def execute(self, enable_console_progress_bars=True):
     """Runs the estimator and maplab console as defined in this job."""
     # Run estimator.
     runCommand(self.exec_path, params_dict=self.params_dict)
@@ -189,7 +189,8 @@ class Job(object):
           os.path.join(console_executable_path, "batch_runner"),
           params_dict={
               "log_dir": self.job_path,
-              "batch_control_file": batch_runner_settings_file
+              "batch_control_file": batch_runner_settings_file,
+              "show_progress_bar": enable_console_progress_bars
           })
     else:
       self.logger.info("No console commands to be run.")

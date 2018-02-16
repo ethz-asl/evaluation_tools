@@ -20,7 +20,7 @@ class Experiment(object):
   """Main class for running an evaluation experiment."""
 
   def __init__(self, experiment_file, results_folder,
-               automatic_dataset_download):
+               automatic_dataset_download, enable_progress_bars=True):
     """Initializes the experiment.
 
     Loads and parses the yaml and creates the corresponding job objects to be
@@ -118,6 +118,8 @@ class Experiment(object):
 
     # Create set of datasets and download them if needed.
     datasets.root_folder = self.root_folder
+    self.enable_progress_bars = enable_progress_bars
+    datasets.enable_download_progress_bar = self.enable_progress_bars
     local_dataset_dir = datasets.getLocalDatasetsFolder()
     available_datasets = datasets.getDatasetList()
     downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
@@ -216,7 +218,7 @@ class Experiment(object):
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
       try:
-        job.execute()
+        job.execute(enable_console_progress_bars=self.enable_progress_bars)
         self.evaluation_results[job.job_name] = {RESULTS_JOB_LABEL: 0}
       except CommandRunnerException as ex:
         self.logger.error(
