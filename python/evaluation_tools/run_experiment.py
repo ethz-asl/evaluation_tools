@@ -212,19 +212,23 @@ class Experiment(object):
 
   def runAndEvaluate(self):
     """Run estimator and console commands and all evaluation scripts."""
+    RESULTS_JOB_LABEL = 'job_estimator_and_console'
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
       try:
         job.execute()
+        self.evaluation_results[job.job_name] = {RESULTS_JOB_LABEL: 0}
       except CommandRunnerException as ex:
-        self.evaluation_results[job.job_name] = {'_job': ex.return_value}
+        self.evaluation_results[job.job_name] = {
+            RESULTS_JOB_LABEL: ex.return_value
+        }
         return
 
       job.writeSummary("job_summary.yaml")
 
       self.logger.info("Run evaluation: " + job.job_path)
       evaluation = Evaluation(job.job_path, self.root_folder)
-      self.evaluation_results[job.job_name] = evaluation.runEvaluations()
+      self.evaluation_results[job.job_name].update(evaluation.runEvaluations())
 
   def runSummarization(self):
     if self.summarize_statistics:
