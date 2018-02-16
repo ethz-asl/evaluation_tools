@@ -219,6 +219,9 @@ class Experiment(object):
         job.execute()
         self.evaluation_results[job.job_name] = {RESULTS_JOB_LABEL: 0}
       except CommandRunnerException as ex:
+        self.logger.error(
+            'Running the job %s failed: the estimator or console command '
+            'returned a non-zero exit code: %i.', job.job_name, ex.return_value)
         self.evaluation_results[job.job_name] = {
             RESULTS_JOB_LABEL: ex.return_value
         }
