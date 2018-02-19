@@ -227,7 +227,7 @@ class Experiment(object):
         self.evaluation_results[job.job_name] = {
             RESULTS_JOB_LABEL: ex.return_value
         }
-        return
+        continue
 
       job.writeSummary("job_summary.yaml")
 
