@@ -220,6 +220,7 @@ def downloadDataset(dataset_name, replace=False):
       logger.info("Unpacking .tar.gz file...")
       tfile = tarfile.open(local_filename, 'r:gz')
       tfile.extractall(dataset_dir)
+      os.remove(local_filename)
       logger.info("...done.")
 
   # -------------------------------------------------------------------------
