@@ -4,6 +4,16 @@ import logging
 import os
 
 
+class CommandRunnerException:
+  def __init__(self, command, return_value):
+    self.command = command
+    self.return_value = return_value
+
+  def __str__(self):
+    return 'Command "' + self.command + \
+        '" returned with a non-zero exit code: ' + str(self.return_value)
+
+
 def runCommand(exec_path, params_dict={}):
   """Runs a system command with parameters coming from a python dictionary.
 
@@ -52,6 +62,4 @@ def runCommand(exec_path, params_dict={}):
 
   return_value = os.system(cmd_string)
   if return_value != 0:
-    raise Exception(
-        'Command "' + cmd_string + '" returned with a non-zero exit code: ' +
-        str(return_value))
+    raise CommandRunnerException(cmd_string, return_value)

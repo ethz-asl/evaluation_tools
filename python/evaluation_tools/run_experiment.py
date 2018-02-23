@@ -6,13 +6,13 @@ from simple_summarization import SimpleSummarization
 import argparse
 import catkin_utils
 import datasets
-import IPython
 import logging
 import numpy as np
 import os
 import shutil
 import time
 import utils as eval_utils
+from command_runner import CommandRunnerException
 import yaml
 
 
@@ -20,7 +20,7 @@ class Experiment(object):
   """Main class for running an evaluation experiment."""
 
   def __init__(self, experiment_file, results_folder,
-               automatic_dataset_download):
+               automatic_dataset_download, enable_progress_bars=True):
     """Initializes the experiment.
 
     Loads and parses the yaml and creates the corresponding job objects to be
@@ -45,6 +45,7 @@ class Experiment(object):
     self.root_folder = os.path.dirname(experiment_file)
     self.experiment_file = experiment_file
     self.results_folder = results_folder
+    self.evaluation_results = {}
 
     if not os.path.exists(self.results_folder):
       os.makedirs(self.results_folder)
@@ -117,6 +118,8 @@ class Experiment(object):
 
     # Create set of datasets and download them if needed.
     datasets.root_folder = self.root_folder
+    self.enable_progress_bars = enable_progress_bars
+    datasets.enable_download_progress_bar = self.enable_progress_bars
     local_dataset_dir = datasets.getLocalDatasetsFolder()
     available_datasets = datasets.getDatasetList()
     downloaded_datasets, data_dir = datasets.getDownloadedDatasets()
@@ -211,14 +214,26 @@ class Experiment(object):
 
   def runAndEvaluate(self):
     """Run estimator and console commands and all evaluation scripts."""
+    RESULTS_JOB_LABEL = 'job_estimator_and_console'
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
-      job.execute()
+      try:
+        job.execute(enable_console_progress_bars=self.enable_progress_bars)
+        self.evaluation_results[job.job_name] = {RESULTS_JOB_LABEL: 0}
+      except CommandRunnerException as ex:
+        self.logger.error(
+            'Running the job %s failed: the estimator or console command '
+            'returned a non-zero exit code: %i.', job.job_name, ex.return_value)
+        self.evaluation_results[job.job_name] = {
+            RESULTS_JOB_LABEL: ex.return_value
+        }
+        continue
+
       job.writeSummary("job_summary.yaml")
 
       self.logger.info("Run evaluation: " + job.job_path)
       evaluation = Evaluation(job.job_path, self.root_folder)
-      evaluation.runEvaluations()
+      self.evaluation_results[job.job_name].update(evaluation.runEvaluations())
 
   def runSummarization(self):
     if self.summarize_statistics:

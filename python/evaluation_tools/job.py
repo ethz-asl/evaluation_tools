@@ -48,8 +48,8 @@ class Job(object):
     This function needs to be called once per job so that all necessary files
     are created on disks.
     """
-    self.job_path = os.path.join(results_folder,
-                                 experiment_dict['experiment_name'])
+    self.job_name = experiment_dict['experiment_name']
+    self.job_path = os.path.join(results_folder, self.job_name)
     self.logger.info("==> Creating job:in folder '{}'".format(self.job_path))
     if not os.path.exists(self.job_path):
       os.makedirs(self.job_path)
@@ -175,7 +175,7 @@ class Job(object):
     if 'parameters' in self.info:
       self.params_dict = self.info['parameters']
 
-  def execute(self):
+  def execute(self, enable_console_progress_bars=True):
     """Runs the estimator and maplab console as defined in this job."""
     # Run estimator.
     runCommand(self.exec_path, params_dict=self.params_dict)
@@ -189,7 +189,8 @@ class Job(object):
           os.path.join(console_executable_path, "batch_runner"),
           params_dict={
               "log_dir": self.job_path,
-              "batch_control_file": batch_runner_settings_file
+              "batch_control_file": batch_runner_settings_file,
+              "show_progress_bar": enable_console_progress_bars
           })
     else:
       self.logger.info("No console commands to be run.")

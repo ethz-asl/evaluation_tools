@@ -11,11 +11,11 @@ import urllib
 import hashlib
 import argparse
 import catkin_utils
-import IPython
 import shutil
 from utils import findFileOrDir
 
 
+enable_download_progress_bar = True
 root_folder = ''
 
 def getDatasetList():
@@ -103,8 +103,9 @@ def _download_reporthook(count, block_size, total_size):
   progress_size = int(count * block_size)
   speed = int(progress_size / (1024 * duration))
   percent = int(count * block_size * 100 / total_size)
-  sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
-                   (percent, progress_size / (1024 * 1024), speed, duration))
+  if enable_download_progress_bar:
+    sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
+                     (percent, progress_size / (1024 * 1024), speed, duration))
   sys.stdout.flush()
 
 
@@ -219,6 +220,7 @@ def downloadDataset(dataset_name, replace=False):
       logger.info("Unpacking .tar.gz file...")
       tfile = tarfile.open(local_filename, 'r:gz')
       tfile.extractall(dataset_dir)
+      os.remove(local_filename)
       logger.info("...done.")
 
   # -------------------------------------------------------------------------
