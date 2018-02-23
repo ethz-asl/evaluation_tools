@@ -17,6 +17,7 @@ class Job(object):
     logging.basicConfig(level=logging.DEBUG)
     self.logger = logging.getLogger(__name__)
     self.params_dict = {}
+    self.additional_placeholders = {}
 
   def createJob(self,
                 dataset_dict,
@@ -61,22 +62,23 @@ class Job(object):
     if 'additional_parameters' in dataset_dict:
       self.dataset_additional_parameters = dataset_dict['additional_parameters']
 
-    self.additional_dataset_parameters = []
     self.sensors_file = experiment_dict['sensors_file']
     self.localization_map = experiment_dict['localization_map']
     self.output_map_key = os.path.basename(self.dataset_name).replace(
         '.bag', '')
     self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
 
-    self.params_dict = copy.deepcopy(parameter_dict)
-    for key, value in self.params_dict.items():
-      if isinstance(value, str):
-        self.params_dict[key] = self.replacePlaceholdersInString(value)
-
     for key, value in self.dataset_additional_parameters.iteritems():
       if isinstance(value, str):
         self.dataset_additional_parameters[key] = \
             self.replacePlaceholdersInString(value)
+      self.additional_placeholders['<' + key + '>'] = str(
+          self.dataset_additional_parameters[key])
+
+    self.params_dict = copy.deepcopy(parameter_dict)
+    for key, value in self.params_dict.items():
+      if isinstance(value, str):
+        self.params_dict[key] = self.replacePlaceholdersInString(value)
 
     # We do not want to pass parameter_sweep as an argument to the executable.
     if 'parameter_sweep' in self.params_dict:
@@ -145,6 +147,9 @@ class Job(object):
     string = string.replace('<OUTPUT_MAP_FOLDER>', self.output_map_folder)
     string = string.replace('<OUTPUT_MAP_KEY>', self.output_map_key)
     string = string.replace('<OUTPUT_DIR>', self.job_path)
+
+    for original, replacement in self.additional_placeholders.iteritems():
+      string = string.replace(original, replacement)
 
     # Check that no substrings in the form of <...> are left.
     regex_result = re.search('<.*>', string)
