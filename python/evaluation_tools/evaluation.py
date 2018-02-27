@@ -12,20 +12,17 @@ from command_runner import CommandRunnerException, runCommand
 
 class Evaluation(object):
 
-  def __init__(self, job_dir, root_folder):
+  def __init__(self, job, root_folder):
     logging.basicConfig(level=logging.DEBUG)
     self.logger = logging.getLogger(__name__)
-    self.job_dir = job_dir
+    self.job = job
+    self.job_dir = job.job_path
     self.root_folder = root_folder
 
-    job_filename = os.path.join(job_dir, 'job.yaml')
-    if not os.path.isfile(job_filename):
-      raise ValueError("Job info file does not exist: " + job_filename)
-    self.job = yaml.safe_load(open(job_filename))
     self.evaluation_scripts = []
-    if "evaluation_scripts" in self.job and \
-        self.job['evaluation_scripts'] is not None:
-      self.evaluation_scripts = self.job["evaluation_scripts"]
+    if "evaluation_scripts" in self.job.info and \
+        self.job.info['evaluation_scripts'] is not None:
+      self.evaluation_scripts = self.job.info["evaluation_scripts"]
       self.logger.info("Registering " + str(len(self.evaluation_scripts)) \
                        + " evaluation scripts.")
     else:
@@ -34,7 +31,7 @@ class Evaluation(object):
   def runEvaluations(self):
     evaluation_script_results = {}
     additional_dataset_parameters_str = yaml.dump(
-        self.job['dataset_additional_parameters'], width=10000)
+        self.job.dataset_additional_parameters, width=10000)
     additional_dataset_parameters_str = \
         '"' + additional_dataset_parameters_str + '"'
     for evaluation in self.evaluation_scripts:
@@ -55,15 +52,14 @@ class Evaluation(object):
 
       params_dict = {
           "data_dir": self.job_dir,
-          "localization_map": self.job['localization_map'],
+          "localization_map": self.job.info['localization_map'],
           "additional_dataset_parameters": additional_dataset_parameters_str
       }
       if 'arguments' in evaluation:
         params_dict.update(evaluation['arguments'])
-      if "parameter_file" in self.job:
-        params_dict["parameter_file"] = self.job["parameter_file"]
-      if "dataset" in self.job:
-        params_dict["dataset"] = self.job["dataset"]
+      if "parameter_file" in self.job.info:
+        params_dict["parameter_file"] = self.job.info["parameter_file"]
+      params_dict["datasets"] = ' '.join(self.job.dataset_names)
       try:
         runCommand(evaluation_script_with_path, params_dict=params_dict)
         evaluation_script_results[evaluation['name']] = 0
@@ -72,7 +68,7 @@ class Evaluation(object):
             'Evaluation "',
             evaluation['name'],
             '" from job "',
-            self.job['experiment_name'],
+            self.job.job_name,
             '" exited with non-zero return value: ',
             ex.return_value,
             sep='')

@@ -237,7 +237,7 @@ class Experiment(object):
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
       try:
-        job.execute(enable_console_progress_bars=self.enable_progress_bars)
+        # job.execute(enable_console_progress_bars=self.enable_progress_bars)
         self.evaluation_results[job.job_name] = {RESULTS_JOB_LABEL: 0}
       except CommandRunnerException as ex:
         self.logger.error(
@@ -251,7 +251,7 @@ class Experiment(object):
       job.writeSummary("job_summary.yaml")
 
       self.logger.info("Run evaluation: " + job.job_path)
-      evaluation = Evaluation(job.job_path, self.root_folder)
+      evaluation = Evaluation(job, self.root_folder)
       self.evaluation_results[job.job_name].update(evaluation.runEvaluations())
 
   def runSummarization(self):
