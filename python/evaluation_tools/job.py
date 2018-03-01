@@ -19,6 +19,112 @@ class Job(object):
     self.params_dict = {}
     self.additional_placeholders = {}
 
+  def __eq__(self, other):
+    if not hasattr(other, 'job_name'):
+      print 'job_name: not present in other'
+      return False
+    if self.job_name != other.job_name:
+      print 'job_name:', self.job_name, '!=', other.job_name
+      return False
+
+    if not hasattr(other, 'job_path'):
+      print 'job_path: not present in other'
+      return False
+    if self.job_path != other.job_path:
+      print 'job_path:', self.job_path, '!=', other.job_path
+      return False
+
+    if not hasattr(other, 'dataset_name'):
+      print 'dataset_name: not present in other'
+      return False
+    if self.dataset_name != other.dataset_name:
+      print 'dataset_name:', self.dataset_name, '!=', other.dataset_name
+      return False
+
+    if not hasattr(other, 'dataset_additional_parameters'):
+      print 'dataset_additional_parameters: not present in other'
+      return False
+    if self.dataset_additional_parameters != \
+        other.dataset_additional_parameters:
+      print 'dataset_additional_parameters:', \
+          self.dataset_additional_parameters, '!=', \
+          other.dataset_additional_parameters
+      return False
+
+    if not hasattr(other, 'sensors_file'):
+      print 'sensors_file: not present in other'
+      return False
+    if self.sensors_file != other.sensors_file:
+      print 'sensors_file:', self.sensors_file, '!=', other.sensors_file
+      return False
+
+    if not hasattr(other, 'localization_map'):
+      print 'localization_map: not present in other'
+      return False
+    if self.localization_map != other.localization_map:
+      print 'localization_map:', self.localization_map, '!=', \
+          other.localization_map
+      return False
+
+    if not hasattr(other, 'output_map_key'):
+      print 'output_map_key: not present in other'
+      return False
+    if self.output_map_key != other.output_map_key:
+      print 'output_map_key:', self.output_map_key, '!=', other.output_map_key
+      return False
+
+    if not hasattr(other, 'output_map_folder'):
+      print 'output_map_folder: not present in other'
+      return False
+    if self.output_map_folder != other.output_map_folder:
+      print 'output_map_folder:', self.output_map_folder, '!=', \
+          other.output_map_folder
+      return False
+
+    if not hasattr(other, 'additional_placeholders'):
+      print 'additional_placeholders: not present in other'
+      return False
+    if self.additional_placeholders != other.additional_placeholders:
+      print 'additional_placeholders:', self.additional_placeholders, '!=', \
+          other.additional_placeholders
+      return False
+
+    if not hasattr(other, 'params_dict'):
+      print 'params_dict: not present in other'
+      return False
+    if self.params_dict != other.params_dict:
+      print 'params_dict:', self.params_dict, '!=', other.params_dict
+      return False
+
+    if not hasattr(other, 'info'):
+      print 'info: not present in other'
+      return False
+    if self.info != other.info:
+      print 'info:', self.info, '!=', other.info
+      return False
+
+    if not hasattr(other, 'exec_name'):
+      print 'exec_name: not present in other'
+      return False
+    if self.exec_name != other.exec_name:
+      print 'exec_name:', self.exec_name, '!=', other.exec_name
+      return False
+
+    if not hasattr(other, 'exec_app'):
+      print 'exec_app: not present in other'
+      return False
+    if self.exec_app != other.exec_app:
+      print 'exec_app:', self.exec_app, '!=', other.exec_app
+      return False
+
+    if not hasattr(other, 'exec_path'):
+      print 'exec_path: not present in other'
+      return False
+    if self.exec_path != other.exec_path:
+      print 'exec_path:', self.exec_path, '!=', other.exec_path
+      return False
+    return True
+
   def createJob(self,
                 dataset_dict,
                 results_folder,
@@ -64,16 +170,9 @@ class Job(object):
 
     self.sensors_file = experiment_dict['sensors_file']
     self.localization_map = experiment_dict['localization_map']
-    self.output_map_key = os.path.basename(self.dataset_name).replace(
-        '.bag', '')
-    self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
 
-    for key, value in self.dataset_additional_parameters.iteritems():
-      if isinstance(value, str):
-        self.dataset_additional_parameters[key] = \
-            self.replacePlaceholdersInString(value)
-      self.additional_placeholders['<' + key + '>'] = str(
-          self.dataset_additional_parameters[key])
+    self._obtainOutputMapKeyAndFolderForDataset()
+    self._addAdditionalPlaceholders()
 
     self.params_dict = copy.deepcopy(parameter_dict)
     for key, value in self.params_dict.items():
@@ -132,6 +231,19 @@ class Job(object):
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
     self.exec_path = os.path.join(self.exec_folder, self.exec_name)
 
+  def _obtainOutputMapKeyAndFolderForDataset(self):
+    self.output_map_key = os.path.basename(self.dataset_name).replace(
+        '.bag', '')
+    self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
+
+  def _addAdditionalPlaceholders(self):
+    for key, value in self.dataset_additional_parameters.iteritems():
+      if isinstance(value, str):
+        self.dataset_additional_parameters[key] = \
+            self.replacePlaceholdersInString(value)
+      self.additional_placeholders['<' + key + '>'] = str(
+          self.dataset_additional_parameters[key])
+
   def replacePlaceholdersInString(self, string):
     """Replaces placeholders in a string with the actual value for the job.
 
@@ -172,6 +284,14 @@ class Job(object):
     if not os.path.isfile(job_filename):
       raise ValueError("Job info file does not exist: " + job_filename)
     self.info = yaml.safe_load(open(job_filename))
+    self.job_name = self.info['experiment_name']
+    self.dataset_name = self.info['dataset']
+    self.dataset_additional_parameters = self.info[
+        'dataset_additional_parameters']
+    self.sensors_file = self.info['sensors_file']
+    self.localization_map = self.info['localization_map']
+    self._obtainOutputMapKeyAndFolderForDataset()
+    self._addAdditionalPlaceholders()
     self.exec_app = self.info["app_package_name"]
     self.exec_name = self.info["app_executable"]
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)

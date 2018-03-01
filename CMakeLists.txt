@@ -12,6 +12,14 @@ catkin_python_setup()
 
 cs_add_library(${PROJECT_NAME} src/evaluation-data-collector.cc)
 
+cs_add_executable(test_app app/test/test-app.cc)
+
+#########
+# TESTS #
+#########
+catkin_add_nosetests(test/test-job.py)
+catkin_add_nosetests(test/test-evaluation.py)
+
 ##########
 # EXPORT #
 ##########
