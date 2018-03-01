@@ -218,25 +218,38 @@ class Job(object):
     if 'parameters' in self.info:
       self.params_dict = self.info['parameters']
 
-  def execute(self, enable_console_progress_bars=True):
-    """Runs the estimator and maplab console as defined in this job."""
-    # Run estimator.
-    runCommand(self.exec_path, params_dict=self.params_dict)
+  def execute(self,
+              skip_estimator=False,
+              skip_console=False,
+              enable_console_progress_bars=True):
+    """Runs the estimator and maplab console as defined in this job.
 
-    # Run console commands.
-    batch_runner_settings_file = os.path.join(self.job_path,
-                                              "console_commands.yaml")
-    if os.path.isfile(batch_runner_settings_file):
-      console_executable_path = catkin_utils.catkinFindLib("maplab_console")
-      runCommand(
-          os.path.join(console_executable_path, "batch_runner"),
-          params_dict={
-              "log_dir": self.job_path,
-              "batch_control_file": batch_runner_settings_file,
-              "show_progress_bar": enable_console_progress_bars
-          })
-    else:
-      self.logger.info("No console commands to be run.")
+    Input:
+    - skip_estimator: skips the estimator step of the job. Useful for debugging.
+    - skip_console: skips the console step of the job. Useful for debugging.
+    - enable_console_progress_bars: if True, progress bars in the maplab
+          console will be disabled. This is useful when the output is forwarded
+          into a log file (e.g. on a Jenkins job).
+    """
+    if not skip_estimator:
+      # Run estimator.
+      runCommand(self.exec_path, params_dict=self.params_dict)
+
+    if not skip_console:
+      # Run console commands.
+      batch_runner_settings_file = os.path.join(self.job_path,
+                                                "console_commands.yaml")
+      if os.path.isfile(batch_runner_settings_file):
+        console_executable_path = catkin_utils.catkinFindLib("maplab_console")
+        runCommand(
+            os.path.join(console_executable_path, "batch_runner"),
+            params_dict={
+                "log_dir": self.job_path,
+                "batch_control_file": batch_runner_settings_file,
+                "show_progress_bar": enable_console_progress_bars
+            })
+      else:
+        self.logger.info("No console commands to be run.")
 
   def writeSummary(self, filename):
     summary_dict = {}
@@ -265,9 +278,24 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description="""Process single job""")
   parser.add_argument('job_dir', help='directory of the job', default='')
+  parser.add_argument(
+      '--skip_estimator',
+      help='Skip the estimator step when running the job.',
+      required=False,
+      default=False,
+      action="store_true")
+  parser.add_argument(
+      '--skip_console',
+      help='Skip the console step when running the job.',
+      required=False,
+      default=False,
+      action="store_true")
   args = parser.parse_args()
 
   if args.job_dir:
     j = Job()
-    j.loadConfigFromFolder(args.job_dir)
+    j.loadConfigFromFolder(
+        args.job_dir,
+        skip_estimator=args.skip_estimator,
+        skip_console=args.skip_console)
     j.execute()

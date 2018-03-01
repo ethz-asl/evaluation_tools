@@ -63,6 +63,7 @@ def findFileOrDir(root_folder, base_folder, file_name):
 
 
 def checkIfAttributesAreEqual(attribute_name, object_1, object_2):
+  """Check if both objects contain an equal attribute."""
   if not hasattr(object_1, attribute_name):
     print(attribute_name, '- not in first object')
     return False
