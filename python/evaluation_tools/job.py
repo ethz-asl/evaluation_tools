@@ -124,6 +124,8 @@ class Job(object):
         if isinstance(value, str):
           self.params_dict[idx][key] = self.replacePlaceholdersInString(
               value, default_index=idx)
+        else:
+          self.params_dict[idx][key] = value
 
     # We do not want to pass parameter_sweep as an argument to the executable.
     if 'parameter_sweep' in self.params_dict:

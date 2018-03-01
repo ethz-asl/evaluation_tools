@@ -237,7 +237,7 @@ class Experiment(object):
     for job in self.job_list:
       self.logger.info("Run job: " + job.job_path + "/job.yaml")
       try:
-        # job.execute(enable_console_progress_bars=self.enable_progress_bars)
+        job.execute(enable_console_progress_bars=self.enable_progress_bars)
         self.evaluation_results[job.job_name] = {RESULTS_JOB_LABEL: 0}
       except CommandRunnerException as ex:
         self.logger.error(
