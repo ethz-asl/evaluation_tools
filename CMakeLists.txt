@@ -12,7 +12,7 @@ catkin_python_setup()
 
 cs_add_library(${PROJECT_NAME} src/evaluation-data-collector.cc)
 
-cs_add_executable(test_app app/test/test-app.cc)
+cs_add_executable(test_app src/test/test-app.cc)
 
 #########
 # TESTS #

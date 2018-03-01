@@ -1,3 +1,9 @@
+# These entries here exist to be used as dummy values in a unit test. They also
+# show how this file can be used. They may not refer to actual datasets.
 - name: sample_dataset
-  date: 2017-03-24
   dir: datasets
+
+# Dataset from a remote server (will be downloaded and extracted).
+- name: MH_01_easy
+  url: http://robotics.ethz.ch/~asl-datasets/maplab/evaluation_datasets/MH_01_easy.tar.gz
+  file_name: MH_01_easy/MH_01_easy.bag  # Path inside the archive.

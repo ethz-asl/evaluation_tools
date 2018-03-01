@@ -234,6 +234,8 @@ class Job(object):
     if not skip_estimator:
       # Run estimator.
       runCommand(self.exec_path, params_dict=self.params_dict)
+    else:
+      self.logger.info("Step estimator of job was skipped.")
 
     if not skip_console:
       # Run console commands.
@@ -250,6 +252,8 @@ class Job(object):
             })
       else:
         self.logger.info("No console commands to be run.")
+    else:
+      self.logger.info("Step console of job was skipped.")
 
   def writeSummary(self, filename):
     summary_dict = {}
@@ -294,8 +298,6 @@ if __name__ == '__main__':
 
   if args.job_dir:
     j = Job()
-    j.loadConfigFromFolder(
-        args.job_dir,
-        skip_estimator=args.skip_estimator,
-        skip_console=args.skip_console)
-    j.execute()
+    j.loadConfigFromFolder(args.job_dir)
+    j.execute(
+        skip_estimator=args.skip_estimator, skip_console=args.skip_console)
