@@ -7,6 +7,7 @@ import copy
 import logging
 import os
 import re
+from evaluation_tools.utils import checkIfAttributesAreEqual
 import yaml
 
 
@@ -20,110 +21,27 @@ class Job(object):
     self.additional_placeholders = {}
 
   def __eq__(self, other):
-    if not hasattr(other, 'job_name'):
-      print 'job_name: not present in other'
-      return False
-    if self.job_name != other.job_name:
-      print 'job_name:', self.job_name, '!=', other.job_name
-      return False
-
-    if not hasattr(other, 'job_path'):
-      print 'job_path: not present in other'
-      return False
-    if self.job_path != other.job_path:
-      print 'job_path:', self.job_path, '!=', other.job_path
-      return False
-
-    if not hasattr(other, 'dataset_name'):
-      print 'dataset_name: not present in other'
-      return False
-    if self.dataset_name != other.dataset_name:
-      print 'dataset_name:', self.dataset_name, '!=', other.dataset_name
-      return False
-
-    if not hasattr(other, 'dataset_additional_parameters'):
-      print 'dataset_additional_parameters: not present in other'
-      return False
-    if self.dataset_additional_parameters != \
-        other.dataset_additional_parameters:
-      print 'dataset_additional_parameters:', \
-          self.dataset_additional_parameters, '!=', \
-          other.dataset_additional_parameters
-      return False
-
-    if not hasattr(other, 'sensors_file'):
-      print 'sensors_file: not present in other'
-      return False
-    if self.sensors_file != other.sensors_file:
-      print 'sensors_file:', self.sensors_file, '!=', other.sensors_file
-      return False
-
-    if not hasattr(other, 'localization_map'):
-      print 'localization_map: not present in other'
-      return False
-    if self.localization_map != other.localization_map:
-      print 'localization_map:', self.localization_map, '!=', \
-          other.localization_map
-      return False
-
-    if not hasattr(other, 'output_map_key'):
-      print 'output_map_key: not present in other'
-      return False
-    if self.output_map_key != other.output_map_key:
-      print 'output_map_key:', self.output_map_key, '!=', other.output_map_key
-      return False
-
-    if not hasattr(other, 'output_map_folder'):
-      print 'output_map_folder: not present in other'
-      return False
-    if self.output_map_folder != other.output_map_folder:
-      print 'output_map_folder:', self.output_map_folder, '!=', \
-          other.output_map_folder
-      return False
-
-    if not hasattr(other, 'additional_placeholders'):
-      print 'additional_placeholders: not present in other'
-      return False
-    if self.additional_placeholders != other.additional_placeholders:
-      print 'additional_placeholders:', self.additional_placeholders, '!=', \
-          other.additional_placeholders
-      return False
-
-    if not hasattr(other, 'params_dict'):
-      print 'params_dict: not present in other'
-      return False
-    if self.params_dict != other.params_dict:
-      print 'params_dict:', self.params_dict, '!=', other.params_dict
-      return False
-
-    if not hasattr(other, 'info'):
-      print 'info: not present in other'
-      return False
-    if self.info != other.info:
-      print 'info:', self.info, '!=', other.info
-      return False
-
-    if not hasattr(other, 'exec_name'):
-      print 'exec_name: not present in other'
-      return False
-    if self.exec_name != other.exec_name:
-      print 'exec_name:', self.exec_name, '!=', other.exec_name
-      return False
-
-    if not hasattr(other, 'exec_app'):
-      print 'exec_app: not present in other'
-      return False
-    if self.exec_app != other.exec_app:
-      print 'exec_app:', self.exec_app, '!=', other.exec_app
-      return False
-
-    if not hasattr(other, 'exec_path'):
-      print 'exec_path: not present in other'
-      return False
-    if self.exec_path != other.exec_path:
-      print 'exec_path:', self.exec_path, '!=', other.exec_path
-      return False
-    return True
+    same_as = True
+    same_as = same_as and checkIfAttributesAreEqual('job_name', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('job_path', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('dataset_name', self, other)
+    same_as = same_as and checkIfAttributesAreEqual(
+        'dataset_additional_parameters', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('sensors_file', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('localization_map', self,
+                                                    other)
+    same_as = same_as and checkIfAttributesAreEqual('output_map_key', self,
+                                                    other)
+    same_as = same_as and checkIfAttributesAreEqual('output_map_folder', self,
+                                                    other)
+    same_as = same_as and checkIfAttributesAreEqual('additional_placeholders',
+                                                    self, other)
+    same_as = same_as and checkIfAttributesAreEqual('params_dict', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('info', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('exec_name', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('exec_app', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('exec_path', self, other)
+    return same_as
 
   def createJob(self,
                 dataset_dict,
