@@ -22,30 +22,19 @@ class Job(object):
 
   def __eq__(self, other):
     same_as = True
-    same_as = same_as and checkIfAttributesAreEqual('job_name', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('job_path', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('dataset_names', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual(
-        'dataset_additional_parameters', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('sensors_file', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('localization_map', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual('output_map_keys', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual('output_map_folders', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual('additional_placeholders',
-                                                    self, other)
-    same_as = same_as and checkIfAttributesAreEqual('params_dict', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('info', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('exec_name', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('exec_app', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('exec_path', self, other)
+    for attr in [
+        'job_name', 'job_path', 'dataset_names',
+        'dataset_additional_parameters', 'sensors_file', 'localization_map',
+        'output_map_keys', 'output_map_folders', 'additional_placeholders',
+        'params_dict', 'info', 'exec_name', 'exec_app', 'exec_path',
+        'experiment_root_folder'
+    ]:
+      same_as = same_as and checkIfAttributesAreEqual(attr, self, other)
     return same_as
 
   def createJob(self,
                 datasets_dict,
+                experiment_root_folder,
                 results_folder,
                 experiment_dict,
                 parameter_name,
@@ -75,6 +64,7 @@ class Job(object):
     are created on disks.
     """
     self.job_name = experiment_dict['experiment_name']
+    self.experiment_root_folder = experiment_root_folder
     self.job_path = os.path.join(results_folder, self.job_name)
     self.logger.info("==> Creating job:in folder '{}'".format(self.job_path))
     if not os.path.exists(self.job_path):
@@ -106,7 +96,7 @@ class Job(object):
     if 'console_commands' in experiment_dict and \
         len( experiment_dict['console_commands']) > 0:
       console_batch_runner_settings = {
-          "vi_map_folder_paths": [self.output_map_folder],
+          "vi_map_folder_paths": [self.output_map_folders[0]],
           "commands": []
       }
       for command in experiment_dict['console_commands']:
@@ -126,6 +116,7 @@ class Job(object):
 
     # Write options to file.
     self.info = copy.deepcopy(experiment_dict)
+    self.info['experiment_root_folder'] = self.experiment_root_folder
     self.info['datasets'] = [{
         'name': name,
         'additional_parameters': additional_parameters,
@@ -265,6 +256,7 @@ class Job(object):
     self.exec_name = self.info["app_executable"]
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
     self.exec_path = os.path.join(self.exec_folder, self.exec_name)
+    self.experiment_root_folder = self.info['experiment_root_folder']
     self.params_dict = [
         dataset_dict['parameters'] for dataset_dict in self.info['datasets']
     ]

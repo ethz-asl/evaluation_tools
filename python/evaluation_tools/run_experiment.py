@@ -210,6 +210,7 @@ class Experiment(object):
           job = Job()
           job.createJob(
               datasets_dict=datasets,
+              experiment_root_folder=self.root_folder,
               results_folder=self.results_folder,
               experiment_dict=self.eval_dict,
               parameter_name=parameter_tag,
@@ -225,6 +226,7 @@ class Experiment(object):
         job = Job()
         job.createJob(
             datasets_dict=datasets,
+            experiment_root_folder=self.root_folder,
             results_folder=self.results_folder,
             experiment_dict=self.eval_dict,
             parameter_name=str(parameter_file),
@@ -251,7 +253,7 @@ class Experiment(object):
       job.writeSummary("job_summary.yaml")
 
       self.logger.info("Run evaluation: " + job.job_path)
-      evaluation = Evaluation(job, self.root_folder)
+      evaluation = Evaluation(job)
       self.evaluation_results[job.job_name].update(evaluation.runEvaluations())
 
   def runSummarization(self):

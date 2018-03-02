@@ -2,22 +2,23 @@
 
 from __future__ import print_function
 
-import os
-import yaml
 import argparse
-import logging
-import utils as eval_utils
 from command_runner import CommandRunnerException, runCommand
+from job import Job
+import logging
+import os
+import utils as eval_utils
+import yaml
 
 
 class Evaluation(object):
 
-  def __init__(self, job, root_folder):
+  def __init__(self, job):
     logging.basicConfig(level=logging.DEBUG)
     self.logger = logging.getLogger(__name__)
     self.job = job
     self.job_dir = job.job_path
-    self.root_folder = root_folder
+    self.root_folder = job.experiment_root_folder
 
     self.evaluation_scripts = []
     if "evaluation_scripts" in self.job.info and \
@@ -87,5 +88,7 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   if args.job_dir:
-    j = Evaluation(args.job_dir)
+    job = Job()
+    job.loadConfigFromFolder(args.job_dir)
+    j = Evaluation(job)
     j.runEvaluations()
