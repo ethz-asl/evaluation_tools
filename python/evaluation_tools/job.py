@@ -43,7 +43,10 @@ class Job(object):
     """Initializes the job.
 
     Input:
-    - datasets_dict: name of the dataset to be used.
+    - datasets_dict: list of datasets dict containing the dataset name and
+          additional parameters.
+    - experiment_root_folder: root folder of the experiment. This is usally the
+          folder where the experiment yaml is located in or one folder above.
     - results_folder: location to store the results in.
     - experiment_dict: dictionary containing the loaded information from the
           experiment yaml.
@@ -51,6 +54,8 @@ class Job(object):
     - parameter_dict: dictionary containing all parameters for this job (loaded
           from the corresponding parameter yaml).
     - summarize_statistics: (only works with SWE).
+
+    Return value: nothing.
 
     This function will do various things to initialize a job:
     1) Create a job folder in <results_folder>/<experiment_name>
@@ -142,6 +147,8 @@ class Job(object):
     self.exec_path = os.path.join(self.exec_folder, self.exec_name)
 
   def _parseDatasetsDict(self, datasets_dict):
+    """Creates a list of dataset names and additional parameters from the dict.
+    """
     self.dataset_names = [
         dataset_dict['name'] for dataset_dict in datasets_dict
     ]
@@ -154,6 +161,7 @@ class Job(object):
         self.dataset_additional_parameters.append({})
 
   def _obtainOutputMapKeyAndFolderForDataset(self):
+    """Generates suggested map keys and folders from the dataset names."""
     self.output_map_keys = [
         os.path.basename(dataset_name).replace('.bag', '')
         for dataset_name in self.dataset_names
@@ -164,6 +172,7 @@ class Job(object):
     ]
 
   def _addAdditionalPlaceholders(self):
+    """Creates placeholders for the additional parameters."""
     for idx, dataset_additional_parameters in \
         enumerate(self.dataset_additional_parameters):
       for key, value in dataset_additional_parameters.iteritems():
@@ -175,6 +184,7 @@ class Job(object):
             dataset_additional_parameters[key])
 
   def _createParamsDict(self, parameter_dict, summarize_statistics=False):
+    """Create a placeholder-free params dict."""
     for idx in range(len(self.dataset_names)):
       self.params_dict.append({})
       for key, value in parameter_dict.items():
@@ -223,6 +233,8 @@ class Job(object):
 
     for original, replacement in self.additional_placeholders[
         default_index].iteritems():
+      # No index is supported for additional placeholders. These come from
+      # the additional dataset parameters.
       string = string.replace(original, replacement)
 
     # Check that no substrings in the form of <...> are left.
