@@ -57,7 +57,11 @@ class Evaluation(object):
           "additional_dataset_parameters": additional_dataset_parameters_str
       }
       if 'arguments' in evaluation:
-        params_dict.update(evaluation['arguments'])
+        for argument_name, value in evaluation['arguments'].iteritems():
+          if isinstance(value, str):
+            value = self.job.replacePlaceholdersInString(value)
+          assert argument_name not in params_dict
+          params_dict[argument_name] = value
       if "parameter_file" in self.job.info:
         params_dict["parameter_file"] = self.job.info["parameter_file"]
       params_dict["datasets"] = ' '.join(self.job.dataset_names)
