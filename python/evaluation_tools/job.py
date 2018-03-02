@@ -179,7 +179,7 @@ class Job(object):
         self.additional_placeholders.append({})
         if isinstance(value, str):
           dataset_additional_parameters[key] = \
-              self.replacePlaceholdersInString(value, default_index=idx)
+              self.replacePlaceholdersInString(value, dataset_index=idx)
         self.additional_placeholders[idx]['<' + key + '>'] = str(
             dataset_additional_parameters[key])
 
@@ -190,7 +190,7 @@ class Job(object):
       for key, value in parameter_dict.items():
         if isinstance(value, str):
           self.params_dict[idx][key] = self.replacePlaceholdersInString(
-              value, default_index=idx)
+              value, dataset_index=idx)
         else:
           self.params_dict[idx][key] = value
 
@@ -201,19 +201,30 @@ class Job(object):
         # TODO(eggerk): generalize or remove.
         self.params_dict[idx]['swe_write_statistics_to_file'] = 1
 
-  def replacePlaceholdersInString(self, string, default_index=0):
+  def replacePlaceholdersInString(self, string, dataset_index=0):
     """Replaces placeholders in a string with the actual value for the job.
 
     This is used to adapt the parameters and console commands to the current
     running job. Replaced placeholders include the current job directory, the
     bag file and others.
+
+    Inputs:
+    - string: string in which placeholders should be replaced.
+    - dataset_index: (default: 0) index of the entry that should be used for
+          placeholders that don't contain an index (e.g. <BAG_FILENAME> instead
+          of <BAG_FILENAME_#>).
+
+    Return value: input string with all placeholders replaced.
+
+    Throws an exception if there are still "<" or ">" characters left in the
+    output string.
     """
     string = string.replace('<OUTPUT_DIR>', self.job_path)
     string = string.replace('<LOG_DIR>', self.job_path)
     string = string.replace('<SENSORS_YAML>', self.sensors_file)
-    string = string.replace('<BAG_FILENAME>', self.dataset_names[default_index])
+    string = string.replace('<BAG_FILENAME>', self.dataset_names[dataset_index])
     string = string.replace('<BAG_FOLDER>',
-                            os.path.dirname(self.dataset_names[default_index]))
+                            os.path.dirname(self.dataset_names[dataset_index]))
     for i in range(0, len(self.dataset_names)):
       string = string.replace('<BAG_FILENAME_' + str(i) + '>',
                               self.dataset_names[i])
@@ -221,18 +232,18 @@ class Job(object):
                               os.path.dirname(self.dataset_names[i]))
     string = string.replace('<LOCALIZATION_MAP>', self.localization_map)
     string = string.replace('<OUTPUT_MAP_FOLDER>',
-                            self.output_map_folders[default_index])
+                            self.output_map_folders[dataset_index])
     for i in range(0, len(self.output_map_folders)):
       string = string.replace('<OUTPUT_MAP_FOLDER_' + str(i) + '>',
                               self.output_map_folders[i])
     string = string.replace('<OUTPUT_MAP_KEY>',
-                            self.output_map_keys[default_index])
+                            self.output_map_keys[dataset_index])
     for i in range(0, len(self.output_map_keys)):
       string = string.replace('<OUTPUT_MAP_KEY_' + str(i) + '>',
                               self.output_map_keys[i])
 
     for original, replacement in self.additional_placeholders[
-        default_index].iteritems():
+        dataset_index].iteritems():
       # No index is supported for additional placeholders. These come from
       # the additional dataset parameters.
       string = string.replace(original, replacement)
