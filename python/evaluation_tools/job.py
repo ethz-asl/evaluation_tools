@@ -24,15 +24,16 @@ class Job(object):
     same_as = True
     same_as = same_as and checkIfAttributesAreEqual('job_name', self, other)
     same_as = same_as and checkIfAttributesAreEqual('job_path', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('dataset_name', self, other)
+    same_as = same_as and checkIfAttributesAreEqual('dataset_names', self,
+                                                    other)
     same_as = same_as and checkIfAttributesAreEqual(
         'dataset_additional_parameters', self, other)
     same_as = same_as and checkIfAttributesAreEqual('sensors_file', self, other)
     same_as = same_as and checkIfAttributesAreEqual('localization_map', self,
                                                     other)
-    same_as = same_as and checkIfAttributesAreEqual('output_map_key', self,
+    same_as = same_as and checkIfAttributesAreEqual('output_map_keys', self,
                                                     other)
-    same_as = same_as and checkIfAttributesAreEqual('output_map_folder', self,
+    same_as = same_as and checkIfAttributesAreEqual('output_map_folders', self,
                                                     other)
     same_as = same_as and checkIfAttributesAreEqual('additional_placeholders',
                                                     self, other)
@@ -53,7 +54,7 @@ class Job(object):
     """Initializes the job.
 
     Input:
-    - dataset_name: name of the dataset to be used.
+    - datasets_dict: name of the dataset to be used.
     - results_folder: location to store the results in.
     - experiment_dict: dictionary containing the loaded information from the
           experiment yaml.
@@ -81,32 +82,13 @@ class Job(object):
     else:
       self.logger.info("Job folder already exists '{}'".format(self.job_path))
 
-    self.dataset_names = [
-        dataset_dict['name'] for dataset_dict in datasets_dict
-    ]
-    self.dataset_additional_parameters = []
-    for dataset_dict in datasets_dict:
-      if 'additional_parameters' in dataset_dict:
-        self.dataset_additional_parameters.append(
-            dataset_dict['additional_parameters'])
-      else:
-        self.dataset_additional_parameters.append({})
+    self._parseDatasetsDict(datasets_dict)
 
     self.sensors_file = experiment_dict['sensors_file']
     self.localization_map = experiment_dict['localization_map']
 
-    # self._obtainOutputMapKeyAndFolderForDataset()
-    # self._addAdditionalPlaceholders()
-
-    print self.dataset_names
-    self.output_map_keys = [
-        os.path.basename(dataset_name).replace('.bag', '')
-        for dataset_name in self.dataset_names
-    ]
-    self.output_map_folders = [
-        os.path.join(self.job_path, output_map_key)
-        for output_map_key in self.output_map_keys
-    ]
+    self._obtainOutputMapKeyAndFolderForDataset()
+    self._addAdditionalPlaceholders()
 
     for idx, dataset_additional_parameters in \
         enumerate(self.dataset_additional_parameters):
@@ -118,21 +100,7 @@ class Job(object):
         self.additional_placeholders[idx]['<' + key + '>'] = str(
             dataset_additional_parameters[key])
 
-    for idx in range(len(self.dataset_names)):
-      self.params_dict.append({})
-      for key, value in parameter_dict.items():
-        if isinstance(value, str):
-          self.params_dict[idx][key] = self.replacePlaceholdersInString(
-              value, default_index=idx)
-        else:
-          self.params_dict[idx][key] = value
-
-    # We do not want to pass parameter_sweep as an argument to the executable.
-    if 'parameter_sweep' in self.params_dict:
-      del self.params_dict['parameter_sweep']
-    if summarize_statistics:
-      # TODO(eggerk): generalize or remove.
-      self.params_dict['swe_write_statistics_to_file'] = 1
+    self._createParamsDict(parameter_dict, summarize_statistics)
 
     # Write console batch runner file.
     if 'console_commands' in experiment_dict and \
@@ -182,18 +150,55 @@ class Job(object):
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
     self.exec_path = os.path.join(self.exec_folder, self.exec_name)
 
-  # def _obtainOutputMapKeyAndFolderForDataset(self):
-  #   self.output_map_key = os.path.basename(self.dataset_name).replace(
-  #       '.bag', '')
-  #   self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
+  def _parseDatasetsDict(self, datasets_dict):
+    self.dataset_names = [
+        dataset_dict['name'] for dataset_dict in datasets_dict
+    ]
+    self.dataset_additional_parameters = []
+    for dataset_dict in datasets_dict:
+      if 'additional_parameters' in dataset_dict:
+        self.dataset_additional_parameters.append(
+            dataset_dict['additional_parameters'])
+      else:
+        self.dataset_additional_parameters.append({})
 
-  # def _addAdditionalPlaceholders(self):
-  #   for key, value in self.dataset_additional_parameters.iteritems():
-  #     if isinstance(value, str):
-  #       self.dataset_additional_parameters[key] = \
-  #           self.replacePlaceholdersInString(value)
-  #     self.additional_placeholders['<' + key + '>'] = str(
-  #         self.dataset_additional_parameters[key])
+  def _obtainOutputMapKeyAndFolderForDataset(self):
+    self.output_map_keys = [
+        os.path.basename(dataset_name).replace('.bag', '')
+        for dataset_name in self.dataset_names
+    ]
+    self.output_map_folders = [
+        os.path.join(self.job_path, output_map_key)
+        for output_map_key in self.output_map_keys
+    ]
+
+  def _addAdditionalPlaceholders(self):
+    for idx, dataset_additional_parameters in \
+        enumerate(self.dataset_additional_parameters):
+      for key, value in dataset_additional_parameters.iteritems():
+        self.additional_placeholders.append({})
+        if isinstance(value, str):
+          dataset_additional_parameters[key] = \
+              self.replacePlaceholdersInString(value, default_index=idx)
+        self.additional_placeholders[idx]['<' + key + '>'] = str(
+            dataset_additional_parameters[key])
+
+  def _createParamsDict(self, parameter_dict, summarize_statistics=False):
+    for idx in range(len(self.dataset_names)):
+      self.params_dict.append({})
+      for key, value in parameter_dict.items():
+        if isinstance(value, str):
+          self.params_dict[idx][key] = self.replacePlaceholdersInString(
+              value, default_index=idx)
+        else:
+          self.params_dict[idx][key] = value
+
+      # We do not want to pass parameter_sweep as an argument to the executable.
+      if 'parameter_sweep' in self.params_dict[idx]:
+        del self.params_dict[idx]['parameter_sweep']
+      if summarize_statistics:
+        # TODO(eggerk): generalize or remove.
+        self.params_dict[idx]['swe_write_statistics_to_file'] = 1
 
   def replacePlaceholdersInString(self, string, default_index=0):
     """Replaces placeholders in a string with the actual value for the job.
@@ -251,9 +256,7 @@ class Job(object):
       raise ValueError("Job info file does not exist: " + job_filename)
     self.info = yaml.safe_load(open(job_filename))
     self.job_name = self.info['experiment_name']
-    self.dataset_name = self.info['dataset']
-    self.dataset_additional_parameters = self.info[
-        'dataset_additional_parameters']
+    self._parseDatasetsDict(self.info['datasets'])
     self.sensors_file = self.info['sensors_file']
     self.localization_map = self.info['localization_map']
     self._obtainOutputMapKeyAndFolderForDataset()
@@ -262,9 +265,9 @@ class Job(object):
     self.exec_name = self.info["app_executable"]
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
     self.exec_path = os.path.join(self.exec_folder, self.exec_name)
-
-    if 'parameters' in self.info:
-      self.params_dict = self.info['parameters']
+    self.params_dict = [
+        dataset_dict['parameters'] for dataset_dict in self.info['datasets']
+    ]
 
   def execute(self,
               skip_estimator=False,
