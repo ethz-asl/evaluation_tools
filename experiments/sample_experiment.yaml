@@ -5,7 +5,7 @@ experiment_name: sample_experiment
 # Executable
 # Note: app needs to be installed into the devel space.
 app_package_name: evaluation_tools
-app_executable: test_app
+app_executable: dummy_app_for_unit_test
 
 # Calibration
 ncamera_calibration_file: Kermit/ncamera.yaml
@@ -17,7 +17,9 @@ parameter_files:
  - sample_parameters_2.yaml
  - sample_parameters_with_sweep.yaml
 
-# Datasets
+# Datasets.
+# Name can either be a name entry from the datasets yaml or a path to an
+# existing bagfile.
 datasets:
 - name: sample_dataset
   additional_parameters:
