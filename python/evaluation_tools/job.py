@@ -19,6 +19,11 @@ class Job(object):
     self.params_dict = {}
     self.additional_placeholders = {}
 
+  def __eq__(self, other):
+    if isinstance(self, other.__class__):
+      return vars(self) == vars(other)
+    return False
+
   def createJob(self,
                 dataset_dict,
                 results_folder,
@@ -64,16 +69,9 @@ class Job(object):
 
     self.sensors_file = experiment_dict['sensors_file']
     self.localization_map = experiment_dict['localization_map']
-    self.output_map_key = os.path.basename(self.dataset_name).replace(
-        '.bag', '')
-    self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
 
-    for key, value in self.dataset_additional_parameters.iteritems():
-      if isinstance(value, str):
-        self.dataset_additional_parameters[key] = \
-            self.replacePlaceholdersInString(value)
-      self.additional_placeholders['<' + key + '>'] = str(
-          self.dataset_additional_parameters[key])
+    self._obtainOutputMapKeyAndFolderForDataset()
+    self._addAdditionalPlaceholders()
 
     self.params_dict = copy.deepcopy(parameter_dict)
     for key, value in self.params_dict.items():
@@ -132,6 +130,19 @@ class Job(object):
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
     self.exec_path = os.path.join(self.exec_folder, self.exec_name)
 
+  def _obtainOutputMapKeyAndFolderForDataset(self):
+    self.output_map_key = os.path.basename(self.dataset_name).replace(
+        '.bag', '')
+    self.output_map_folder = os.path.join(self.job_path, self.output_map_key)
+
+  def _addAdditionalPlaceholders(self):
+    for key, value in self.dataset_additional_parameters.iteritems():
+      if isinstance(value, str):
+        self.dataset_additional_parameters[key] = \
+            self.replacePlaceholdersInString(value)
+      self.additional_placeholders['<' + key + '>'] = str(
+          self.dataset_additional_parameters[key])
+
   def replacePlaceholdersInString(self, string):
     """Replaces placeholders in a string with the actual value for the job.
 
@@ -172,6 +183,14 @@ class Job(object):
     if not os.path.isfile(job_filename):
       raise ValueError("Job info file does not exist: " + job_filename)
     self.info = yaml.safe_load(open(job_filename))
+    self.job_name = self.info['experiment_name']
+    self.dataset_name = self.info['dataset']
+    self.dataset_additional_parameters = self.info[
+        'dataset_additional_parameters']
+    self.sensors_file = self.info['sensors_file']
+    self.localization_map = self.info['localization_map']
+    self._obtainOutputMapKeyAndFolderForDataset()
+    self._addAdditionalPlaceholders()
     self.exec_app = self.info["app_package_name"]
     self.exec_name = self.info["app_executable"]
     self.exec_folder = catkin_utils.catkinFindLib(self.exec_app)
@@ -180,25 +199,42 @@ class Job(object):
     if 'parameters' in self.info:
       self.params_dict = self.info['parameters']
 
-  def execute(self, enable_console_progress_bars=True):
-    """Runs the estimator and maplab console as defined in this job."""
-    # Run estimator.
-    runCommand(self.exec_path, params_dict=self.params_dict)
+  def execute(self,
+              skip_estimator=False,
+              skip_console=False,
+              enable_console_progress_bars=True):
+    """Runs the estimator and maplab console as defined in this job.
 
-    # Run console commands.
-    batch_runner_settings_file = os.path.join(self.job_path,
-                                              "console_commands.yaml")
-    if os.path.isfile(batch_runner_settings_file):
-      console_executable_path = catkin_utils.catkinFindLib("maplab_console")
-      runCommand(
-          os.path.join(console_executable_path, "batch_runner"),
-          params_dict={
-              "log_dir": self.job_path,
-              "batch_control_file": batch_runner_settings_file,
-              "show_progress_bar": enable_console_progress_bars
-          })
+    Input:
+    - skip_estimator: skips the estimator step of the job. Useful for debugging.
+    - skip_console: skips the console step of the job. Useful for debugging.
+    - enable_console_progress_bars: if True, progress bars in the maplab
+          console will be disabled. This is useful when the output is forwarded
+          into a log file (e.g. on a Jenkins job).
+    """
+    if not skip_estimator:
+      # Run estimator.
+      runCommand(self.exec_path, params_dict=self.params_dict)
     else:
-      self.logger.info("No console commands to be run.")
+      self.logger.info("Step estimator of job was skipped.")
+
+    if not skip_console:
+      # Run console commands.
+      batch_runner_settings_file = os.path.join(self.job_path,
+                                                "console_commands.yaml")
+      if os.path.isfile(batch_runner_settings_file):
+        console_executable_path = catkin_utils.catkinFindLib("maplab_console")
+        runCommand(
+            os.path.join(console_executable_path, "batch_runner"),
+            params_dict={
+                "log_dir": self.job_path,
+                "batch_control_file": batch_runner_settings_file,
+                "show_progress_bar": enable_console_progress_bars
+            })
+      else:
+        self.logger.info("No console commands to be run.")
+    else:
+      self.logger.info("Step console of job was skipped.")
 
   def writeSummary(self, filename):
     summary_dict = {}
@@ -227,9 +263,22 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description="""Process single job""")
   parser.add_argument('job_dir', help='directory of the job', default='')
+  parser.add_argument(
+      '--skip_estimator',
+      help='Skip the estimator step when running the job.',
+      required=False,
+      default=False,
+      action="store_true")
+  parser.add_argument(
+      '--skip_console',
+      help='Skip the console step when running the job.',
+      required=False,
+      default=False,
+      action="store_true")
   args = parser.parse_args()
 
   if args.job_dir:
     j = Job()
     j.loadConfigFromFolder(args.job_dir)
-    j.execute()
+    j.execute(
+        skip_estimator=args.skip_estimator, skip_console=args.skip_console)
