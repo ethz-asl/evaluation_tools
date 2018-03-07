@@ -1,9 +1,14 @@
-# These entries here exist to be used as dummy values in a unit test. They also
-# show how this file can be used. They may not refer to actual datasets.
-- name: sample_dataset
-  dir: datasets
-
 # Dataset from a remote server (will be downloaded and extracted).
 - name: MH_01_easy
   url: http://robotics.ethz.ch/~asl-datasets/maplab/evaluation_datasets/MH_01_easy.tar.gz
   file_name: MH_01_easy/MH_01_easy.bag  # Path inside the archive.
+
+# Example local dataset. Dataset will be copied from <dir>/<name>.
+- name: local_dataset.bag
+  dir: /path/to/local/dataset/folder
+
+# Dummy entry to be used in a unit test. This refers to an actual file, but not
+# a real dataset.
+- name: sample_dataset
+  dir: datasets
+

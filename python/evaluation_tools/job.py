@@ -7,7 +7,6 @@ import copy
 import logging
 import os
 import re
-from evaluation_tools.utils import checkIfAttributesAreEqual
 import yaml
 
 
@@ -21,27 +20,9 @@ class Job(object):
     self.additional_placeholders = {}
 
   def __eq__(self, other):
-    same_as = True
-    same_as = same_as and checkIfAttributesAreEqual('job_name', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('job_path', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('dataset_name', self, other)
-    same_as = same_as and checkIfAttributesAreEqual(
-        'dataset_additional_parameters', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('sensors_file', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('localization_map', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual('output_map_key', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual('output_map_folder', self,
-                                                    other)
-    same_as = same_as and checkIfAttributesAreEqual('additional_placeholders',
-                                                    self, other)
-    same_as = same_as and checkIfAttributesAreEqual('params_dict', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('info', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('exec_name', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('exec_app', self, other)
-    same_as = same_as and checkIfAttributesAreEqual('exec_path', self, other)
-    return same_as
+    if isinstance(self, other.__class__):
+      return vars(self) == vars(other)
+    return False
 
   def createJob(self,
                 dataset_dict,
