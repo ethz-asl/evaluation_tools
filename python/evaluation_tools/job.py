@@ -7,7 +7,6 @@ import copy
 import logging
 import os
 import re
-from evaluation_tools.utils import checkIfAttributesAreEqual
 import yaml
 
 
@@ -21,16 +20,9 @@ class Job(object):
     self.additional_placeholders = []
 
   def __eq__(self, other):
-    same_as = True
-    for attr in [
-        'job_name', 'job_path', 'dataset_names',
-        'dataset_additional_parameters', 'sensors_file', 'localization_map',
-        'output_map_keys', 'output_map_folders', 'additional_placeholders',
-        'params_dict', 'info', 'exec_name', 'exec_app', 'exec_path',
-        'experiment_root_folder'
-    ]:
-      same_as = same_as and checkIfAttributesAreEqual(attr, self, other)
-    return same_as
+    if isinstance(self, other.__class__):
+      return vars(self) == vars(other)
+    return False
 
   def createJob(self,
                 datasets_dict,
@@ -84,16 +76,6 @@ class Job(object):
 
     self._obtainOutputMapKeyAndFolderForDataset()
     self._addAdditionalPlaceholders()
-
-    for idx, dataset_additional_parameters in \
-        enumerate(self.dataset_additional_parameters):
-      for key, value in dataset_additional_parameters.iteritems():
-        self.additional_placeholders.append({})
-        if isinstance(value, str):
-          dataset_additional_parameters[key] = \
-              self.replacePlaceholdersInString(value, default_index=idx)
-        self.additional_placeholders[idx]['<' + key + '>'] = str(
-            dataset_additional_parameters[key])
 
     self._createParamsDict(parameter_dict, summarize_statistics)
 

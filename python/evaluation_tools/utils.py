@@ -60,18 +60,3 @@ def findFileOrDir(root_folder, base_folder, file_name):
   raise Exception('Unable to find the file "' + file_name + '". Checked in:\n- '
                   + file_name + '\n- ' + file_name_to_try_1 + '\n -' +
                   file_name_to_try_2 + '\n- ' + file_name_to_try_3)
-
-
-def checkIfAttributesAreEqual(attribute_name, object_1, object_2):
-  """Check if both objects contain an equal attribute."""
-  if not hasattr(object_1, attribute_name):
-    print(attribute_name, '- not in first object')
-    return False
-  if not hasattr(object_2, attribute_name):
-    print(attribute_name, '- not in second object')
-    return False
-  if getattr(object_1, attribute_name) != getattr(object_2, attribute_name):
-    print(attribute_name, '- not equal:', getattr(object_1, attribute_name),
-          'vs', getattr(object_2, attribute_name))
-    return False
-  return True
