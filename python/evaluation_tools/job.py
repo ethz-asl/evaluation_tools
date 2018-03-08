@@ -18,6 +18,7 @@ class Job(object):
     self.logger = logging.getLogger(__name__)
     self.params_dict = []
     self.additional_placeholders = []
+    self._dataset_log_dir_prefix = 'estimator_output_'
 
   def __eq__(self, other):
     if isinstance(self, other.__class__):
@@ -77,6 +78,12 @@ class Job(object):
     self._obtainOutputMapKeyAndFolderForDataset()
     self._addAdditionalPlaceholders()
 
+    for dataset_name in self.dataset_names:
+      dataset_log_dir = os.path.join(
+          self.job_path, self._dataset_log_dir_prefix + dataset_name)
+      if not os.path.exists(dataset_log_dir):
+        os.makedirs(dataset_log_dir)
+
     self._createParamsDict(parameter_dict, summarize_statistics)
 
     # Write console batch runner file.
@@ -109,7 +116,7 @@ class Job(object):
         'additional_parameters': additional_parameters,
         'parameters': parameters
     } for name, additional_parameters, parameters in zip(
-        self.dataset_names, self.dataset_additional_parameters,
+        self.dataset_paths, self.dataset_additional_parameters,
         self.params_dict)]
     self.info['parameter_file'] = parameter_name
     del self.info['parameter_files']
@@ -130,7 +137,7 @@ class Job(object):
   def _parseDatasetsDict(self, datasets_dict):
     """Creates a list of dataset names and additional parameters from the dict.
     """
-    self.dataset_names = [
+    self.dataset_paths = [
         dataset_dict['name'] for dataset_dict in datasets_dict
     ]
     self.dataset_additional_parameters = []
@@ -143,13 +150,13 @@ class Job(object):
 
   def _obtainOutputMapKeyAndFolderForDataset(self):
     """Generates suggested map keys and folders from the dataset names."""
-    self.output_map_keys = [
+    self.dataset_names = [
         os.path.basename(dataset_name).replace('.bag', '')
-        for dataset_name in self.dataset_names
+        for dataset_name in self.dataset_paths
     ]
     self.output_map_folders = [
-        os.path.join(self.job_path, output_map_key)
-        for output_map_key in self.output_map_keys
+        os.path.join(self.job_path, output_map_key, output_map_key)
+        for output_map_key in self.dataset_names
     ]
 
   def _addAdditionalPlaceholders(self):
@@ -166,7 +173,7 @@ class Job(object):
 
   def _createParamsDict(self, parameter_dict, summarize_statistics=False):
     """Create a placeholder-free params dict."""
-    for idx in range(len(self.dataset_names)):
+    for idx in range(len(self.dataset_paths)):
       self.params_dict.append({})
       for key, value in parameter_dict.items():
         if isinstance(value, str):
@@ -199,29 +206,61 @@ class Job(object):
 
     Throws an exception if there are still "<" or ">" characters left in the
     output string.
+
+    The following placeholders exist (# refers to the dataset index):
+    - <BAG_FILENAME>: path to the dataset bag file.
+    - <BAG_FOLDER>: folder of the bag file.
+    - <SENSORS_YAML>: path to the sensor calibration file as specified in the
+          experiment yaml.
+    - <LOCALIZATION_MAP>: path to the localization map as specified in the
+          experiment yaml.
+    - <OUTPUT_MAP_FOLDER>, <OUTPUT_MAP_FOLDER_#>: suggested folder to save the
+          map in if it's needed for the console execution or the evaluation
+          scripts.
+    - <DATASET_NAME>, <DATASET_NAME_#>, <OUTPUT_MAP_KEY>, <OUTPUT_MAP_KEY_#>:
+          dataset name, i.e. the basename of the bag path without the '.bag'
+          extension. This is the suggested map key to use when the map is loaded
+          into the console.
+    - <JOB_DIR>: path of the job.
+    - <DATASET_LOG_DIR>: suggested output folder for dataset-specific data,
+          i.e. primarily output data from the estimator.  This will be equal to
+          <JOB_DIR>/estimator_output_<DATASET_NAME>
     """
-    string = string.replace('<OUTPUT_DIR>', self.job_path)
-    string = string.replace('<LOG_DIR>', self.job_path)
-    string = string.replace('<SENSORS_YAML>', self.sensors_file)
-    string = string.replace('<BAG_FILENAME>', self.dataset_names[dataset_index])
+    string = string.replace('<BAG_FILENAME>', self.dataset_paths[dataset_index])
     string = string.replace('<BAG_FOLDER>',
-                            os.path.dirname(self.dataset_names[dataset_index]))
+                            os.path.dirname(self.dataset_paths[dataset_index]))
     for i in range(0, len(self.dataset_names)):
       string = string.replace('<BAG_FILENAME_' + str(i) + '>',
                               self.dataset_names[i])
       string = string.replace('<BAG_FOLDER_' + str(i) + '>',
                               os.path.dirname(self.dataset_names[i]))
+
+    string = string.replace('<SENSORS_YAML>', self.sensors_file)
     string = string.replace('<LOCALIZATION_MAP>', self.localization_map)
+
     string = string.replace('<OUTPUT_MAP_FOLDER>',
                             self.output_map_folders[dataset_index])
     for i in range(0, len(self.output_map_folders)):
       string = string.replace('<OUTPUT_MAP_FOLDER_' + str(i) + '>',
                               self.output_map_folders[i])
+
+    string = string.replace('<DATASET_NAME>',
+                            self.dataset_names[dataset_index])
+    for i in range(0, len(self.dataset_names)):
+      string = string.replace('<DATASET_NAME_' + str(i) + '>',
+                              self.dataset_names[i])
     string = string.replace('<OUTPUT_MAP_KEY>',
-                            self.output_map_keys[dataset_index])
-    for i in range(0, len(self.output_map_keys)):
+                            self.dataset_names[dataset_index])
+    for i in range(0, len(self.dataset_names)):
       string = string.replace('<OUTPUT_MAP_KEY_' + str(i) + '>',
-                              self.output_map_keys[i])
+                              self.dataset_names[i])
+
+    string = string.replace('<JOB_DIR>', self.job_path)
+    string = string.replace(
+        '<DATASET_LOG_DIR>',
+        os.path.join(
+            self.job_path,
+            self._dataset_log_dir_prefix + self.dataset_names[dataset_index]))
 
     for original, replacement in self.additional_placeholders[
         dataset_index].iteritems():

@@ -52,7 +52,7 @@ class Evaluation(object):
             'the evaluation script listing.')
 
       params_dict = {
-          "data_dir": self.job_dir,
+          "job_dir": self.job_dir,
           "localization_map": self.job.info['localization_map'],
           "additional_dataset_parameters": additional_dataset_parameters_str
       }
