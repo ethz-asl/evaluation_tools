@@ -64,7 +64,8 @@ class Evaluation(object):
           params_dict[argument_name] = value
       if "parameter_file" in self.job.info:
         params_dict["parameter_file"] = self.job.info["parameter_file"]
-      params_dict["datasets"] = ' '.join(self.job.dataset_names)
+      params_dict["dataset_paths"] = ' '.join(self.job.dataset_paths)
+      params_dict["dataset_log_dirs"] = ' '.join(self.job.dataset_log_dirs)
       try:
         runCommand(evaluation_script_with_path, params_dict=params_dict)
         evaluation_script_results[evaluation['name']] = 0

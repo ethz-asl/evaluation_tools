@@ -78,9 +78,7 @@ class Job(object):
     self._obtainOutputMapKeyAndFolderForDataset()
     self._addAdditionalPlaceholders()
 
-    for dataset_name in self.dataset_names:
-      dataset_log_dir = os.path.join(
-          self.job_path, self._dataset_log_dir_prefix + dataset_name)
+    for dataset_log_dir in self.dataset_log_dirs:
       if not os.path.exists(dataset_log_dir):
         os.makedirs(dataset_log_dir)
 
@@ -154,9 +152,14 @@ class Job(object):
         os.path.basename(dataset_name).replace('.bag', '')
         for dataset_name in self.dataset_paths
     ]
+    self.dataset_log_dirs = [
+        os.path.join(self.job_path, self._dataset_log_dir_prefix + dataset_name)
+        for dataset_name in self.dataset_names
+    ]
     self.output_map_folders = [
-        os.path.join(self.job_path, output_map_key, output_map_key)
-        for output_map_key in self.dataset_names
+        os.path.join(self.dataset_log_dirs,
+                     dataset_name) for dataset_log_dir, dataset_name in zip(
+                         self.dataset_log_dirs, self.dataset_names)
     ]
 
   def _addAdditionalPlaceholders(self):
@@ -256,11 +259,8 @@ class Job(object):
                               self.dataset_names[i])
 
     string = string.replace('<JOB_DIR>', self.job_path)
-    string = string.replace(
-        '<DATASET_LOG_DIR>',
-        os.path.join(
-            self.job_path,
-            self._dataset_log_dir_prefix + self.dataset_names[dataset_index]))
+    string = string.replace('<DATASET_LOG_DIR>',
+                            self.dataset_log_dirs[dataset_index])
 
     for original, replacement in self.additional_placeholders[
         dataset_index].iteritems():
