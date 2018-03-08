@@ -157,7 +157,7 @@ class Job(object):
         for dataset_name in self.dataset_names
     ]
     self.output_map_folders = [
-        os.path.join(self.dataset_log_dirs,
+        os.path.join(dataset_log_dir,
                      dataset_name) for dataset_log_dir, dataset_name in zip(
                          self.dataset_log_dirs, self.dataset_names)
     ]
