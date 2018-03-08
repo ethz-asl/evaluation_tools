@@ -112,7 +112,6 @@ class Job(object):
         self.dataset_names, self.dataset_additional_parameters,
         self.params_dict)]
     self.info['parameter_file'] = parameter_name
-    # self.info['parameters'] = self.params_dict
     del self.info['parameter_files']
     if 'console_commands' in self.info:
       del self.info['console_commands']
