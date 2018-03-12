@@ -26,4 +26,4 @@ def _create_jobs():
 def test_evaluation_creation():
   jobs, root_folder = _create_jobs()
   for job in jobs:
-    evaluation = Evaluation(job.job_path, root_folder)
+    evaluation = Evaluation(job)

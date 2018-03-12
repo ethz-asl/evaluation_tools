@@ -36,7 +36,7 @@ def findFileOrDir(root_folder, base_folder, file_name):
 
   This will look for file_name in the current directory, in
   <root_folder>/<file_name> and <root_folder>/<base_folder>/<file_name> and
-  <root_folder/../<base_folder>/<file_name>.
+  <root_folder>/../<base_folder>/<file_name>.
 
   Returns the path of the file on the disk if it was found, otherwise an
   exception is raised.

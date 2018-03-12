@@ -2,30 +2,28 @@
 
 from __future__ import print_function
 
-import os
-import yaml
 import argparse
-import logging
-import utils as eval_utils
 from command_runner import CommandRunnerException, runCommand
+from job import Job
+import logging
+import os
+import utils as eval_utils
+import yaml
 
 
 class Evaluation(object):
 
-  def __init__(self, job_dir, root_folder):
+  def __init__(self, job):
     logging.basicConfig(level=logging.DEBUG)
     self.logger = logging.getLogger(__name__)
-    self.job_dir = job_dir
-    self.root_folder = root_folder
+    self.job = job
+    self.job_dir = job.job_path
+    self.root_folder = job.experiment_root_folder
 
-    job_filename = os.path.join(job_dir, 'job.yaml')
-    if not os.path.isfile(job_filename):
-      raise ValueError("Job info file does not exist: " + job_filename)
-    self.job = yaml.safe_load(open(job_filename))
     self.evaluation_scripts = []
-    if "evaluation_scripts" in self.job and \
-        self.job['evaluation_scripts'] is not None:
-      self.evaluation_scripts = self.job["evaluation_scripts"]
+    if "evaluation_scripts" in self.job.info and \
+        self.job.info['evaluation_scripts'] is not None:
+      self.evaluation_scripts = self.job.info["evaluation_scripts"]
       self.logger.info("Registering " + str(len(self.evaluation_scripts)) \
                        + " evaluation scripts.")
     else:
@@ -34,7 +32,7 @@ class Evaluation(object):
   def runEvaluations(self):
     evaluation_script_results = {}
     additional_dataset_parameters_str = yaml.dump(
-        self.job['dataset_additional_parameters'], width=10000)
+        self.job.dataset_additional_parameters, width=10000)
     additional_dataset_parameters_str = \
         '"' + additional_dataset_parameters_str + '"'
     for evaluation in self.evaluation_scripts:
@@ -54,16 +52,20 @@ class Evaluation(object):
             'the evaluation script listing.')
 
       params_dict = {
-          "data_dir": self.job_dir,
-          "localization_map": self.job['localization_map'],
+          "job_dir": self.job_dir,
+          "localization_map": self.job.info['localization_map'],
           "additional_dataset_parameters": additional_dataset_parameters_str
       }
       if 'arguments' in evaluation:
-        params_dict.update(evaluation['arguments'])
-      if "parameter_file" in self.job:
-        params_dict["parameter_file"] = self.job["parameter_file"]
-      if "dataset" in self.job:
-        params_dict["dataset"] = self.job["dataset"]
+        for argument_name, value in evaluation['arguments'].iteritems():
+          if isinstance(value, str):
+            value = self.job.replacePlaceholdersInString(value)
+          assert argument_name not in params_dict
+          params_dict[argument_name] = value
+      if "parameter_file" in self.job.info:
+        params_dict["parameter_file"] = self.job.info["parameter_file"]
+      params_dict["dataset_paths"] = ' '.join(self.job.dataset_paths)
+      params_dict["dataset_log_dirs"] = ' '.join(self.job.dataset_log_dirs)
       try:
         runCommand(evaluation_script_with_path, params_dict=params_dict)
         evaluation_script_results[evaluation['name']] = 0
@@ -72,7 +74,7 @@ class Evaluation(object):
             'Evaluation "',
             evaluation['name'],
             '" from job "',
-            self.job['experiment_name'],
+            self.job.job_name,
             '" exited with non-zero return value: ',
             ex.return_value,
             sep='')
@@ -91,5 +93,7 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   if args.job_dir:
-    j = Evaluation(args.job_dir)
+    job = Job()
+    job.loadConfigFromFolder(args.job_dir)
+    j = Evaluation(job)
     j.runEvaluations()

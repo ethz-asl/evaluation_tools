@@ -19,8 +19,11 @@ import yaml
 class Experiment(object):
   """Main class for running an evaluation experiment."""
 
-  def __init__(self, experiment_file, results_folder,
-               automatic_dataset_download, enable_progress_bars=True):
+  def __init__(self,
+               experiment_file,
+               results_folder,
+               automatic_dataset_download,
+               enable_progress_bars=True):
     """Initializes the experiment.
 
     Loads and parses the yaml and creates the corresponding job objects to be
@@ -166,51 +169,69 @@ class Experiment(object):
 
     # Create jobs for all dataset-parameter file combination.
     self.job_list = []
-    for dataset in self.eval_dict['datasets']:
-      for parameter_file in self.parameter_files:
-        params = yaml.safe_load(open(parameter_file))
+    if 'create_job_for_each_dataset' in self.eval_dict and \
+        not self.eval_dict['create_job_for_each_dataset']:
+      # Create only one job for all datasets.
+      self._createJobsForDatasets(experiment_basename,
+                                  self.eval_dict['datasets'])
+    else:
+      # Default value is true.
+      # Create a job for every dataset.
+      for dataset in self.eval_dict['datasets']:
+        self._createJobsForDatasets(experiment_basename, [dataset])
 
-        if 'parameter_sweep' in params:
-          p_name = params['parameter_sweep']["name"]
-          p_min = params['parameter_sweep']["min"]
-          p_max = params['parameter_sweep']["max"]
-          p_step_size = params['parameter_sweep']["step_size"]
+  def _createJobsForDatasets(self, experiment_basename, datasets):
+    assert len(datasets) > 0
+    job_name_from_dataset = os.path.basename(datasets[0]['name']).replace(
+        '.bag', '')
+    if len(datasets) > 1:
+      job_name_from_dataset += '_and_others'
 
-          step = 0
-          max_steps = 100
-          p_current = p_min
-          while p_current <= p_max and step < max_steps:
-            params[p_name] = p_current
-            self.eval_dict['experiment_name'] = str(
-                experiment_basename + '/' + os.path.basename(dataset['name'])
-                .replace('.bag', '') + '__' + os.path.basename(parameter_file)
-                .replace('.yaml', '') + '__SWEEP_' + str(step))
+    for parameter_file in self.parameter_files:
+      params = yaml.safe_load(open(parameter_file))
 
-            parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
-            job = Job()
-            job.createJob(
-                dataset_dict=dataset,
-                results_folder=self.results_folder,
-                experiment_dict=self.eval_dict,
-                parameter_name=parameter_tag,
-                parameter_dict=params)
-            self.job_list.append(job)
-            p_current += p_step_size
-            step += 1
-        else:
+      if 'parameter_sweep' in params:
+        p_name = params['parameter_sweep']["name"]
+        p_min = params['parameter_sweep']["min"]
+        p_max = params['parameter_sweep']["max"]
+        p_step_size = params['parameter_sweep']["step_size"]
+
+        step = 0
+        max_steps = 100
+        p_current = p_min
+        while p_current <= p_max and step < max_steps:
+          params[p_name] = p_current
           self.eval_dict['experiment_name'] = str(
-              experiment_basename + '/' +
-              os.path.basename(dataset['name']).replace('.bag', '') + '__' +
-              os.path.basename(parameter_file).replace('.yaml', ''))
+              experiment_basename + '/' + job_name_from_dataset + '__' +
+              os.path.basename(parameter_file)
+              .replace('.yaml', '') + '__SWEEP_' + str(step))
 
+          parameter_tag = str(parameter_file) + "_SWEEP_" + str(p_current)
           job = Job()
           job.createJob(
-              dataset_dict=dataset,
+              datasets_dict=datasets,
+              experiment_root_folder=self.root_folder,
               results_folder=self.results_folder,
               experiment_dict=self.eval_dict,
-              parameter_name=str(parameter_file),
+              parameter_name=parameter_tag,
               parameter_dict=params)
           self.job_list.append(job)
+          p_current += p_step_size
+          step += 1
+      else:
+        self.eval_dict['experiment_name'] = str(
+            experiment_basename + '/' + job_name_from_dataset + '__' +
+            os.path.basename(parameter_file).replace('.yaml', ''))
+
+        job = Job()
+        job.createJob(
+            datasets_dict=datasets,
+            experiment_root_folder=self.root_folder,
+            results_folder=self.results_folder,
+            experiment_dict=self.eval_dict,
+            parameter_name=str(parameter_file),
+            parameter_dict=params)
+        self.job_list.append(job)
 
   def runAndEvaluate(self):
     """Run estimator and console commands and all evaluation scripts."""
@@ -232,7 +253,7 @@ class Experiment(object):
       job.writeSummary("job_summary.yaml")
 
       self.logger.info("Run evaluation: " + job.job_path)
-      evaluation = Evaluation(job.job_path, self.root_folder)
+      evaluation = Evaluation(job)
       self.evaluation_results[job.job_name].update(evaluation.runEvaluations())
 
   def runSummarization(self):
