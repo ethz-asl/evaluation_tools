@@ -86,27 +86,31 @@ class Experiment(object):
     # Find sensors file:
     sensors_filepath = ''
     if 'sensors_file' in self.eval_dict.keys():
-      #sensors_file = eval_utils.findFileOrDir(self.root_folder, "calibrations",
-      #                                        self.eval_dict['sensors_file'])
       sensors_file = self.eval_dict['sensors_file']
-      if len(sensors_file) > 1:
-        raise Exception(
-          'There is more than one sensors file listed. This is '
-          'not supported.')
-      sensors_file = sensors_file[0]
+      if type(sensors_file) == str:
+        sensors_filepath = sensors_file
+      elif type(sensors_file) == list:
+        if len(sensors_file) > 1:
+          raise Exception(
+            'There is more than one sensors file listed. This is '
+            'not supported.')
+        sensors_file = sensors_file[0]
 
-      if 'name' in sensors_file:
-        if 'package' in sensors_file:
-          package_path = catkin_utils.catkinFindSrc(sensors_file['package'])
-          sensors_filepath = eval_utils.findFileOrDir(
-              package_path, "calibrations", sensors_file['name'])
+        if 'name' in sensors_file:
+          if 'package' in sensors_file:
+            package_path = catkin_utils.catkinFindSrc(sensors_file['package'])
+            sensors_filepath = eval_utils.findFileOrDir(
+                package_path, "calibrations", sensors_file['name'])
+          else:
+            sensors_filepath = eval_utils.findFileOrDir(
+                self.root_folder, "calibrations", sensors_file['name'])
         else:
-          sensors_filepath = eval_utils.findFileOrDir(
-              self.root_folder, "calibrations", sensors_file['name'])
+          raise Exception(
+              'Please provide a "name" entry and optionally a "package" entry in '
+              'the sensors_file listing.')
       else:
-        raise Exception(
-            'Please provide a "name" entry and optionally a "package" entry in '
-            'the sensors_file listing.')
+          raise Exception(
+              'Invalid type: ' + str(type(sensors_file)))
 
     self.eval_dict['sensors_file'] = sensors_filepath
     self.logger.info("Using sensors file: " + sensors_filepath)
@@ -183,18 +187,24 @@ class Experiment(object):
     # Create set of parameter files
     self.parameter_files = set()
     for parameter_file in self.eval_dict["parameter_files"]:
-      if 'name' in parameter_file:
-        if 'package' in parameter_file:
-          package_path = catkin_utils.catkinFindSrc(parameter_file['package'])
-          parameter_filepath = eval_utils.findFileOrDir(
-              package_path, "parameter_files", parameter_file['name'])
+      if type(parameter_file) == dict:
+        if 'name' in parameter_file:
+          if 'package' in parameter_file:
+            package_path = catkin_utils.catkinFindSrc(parameter_file['package'])
+            parameter_filepath = eval_utils.findFileOrDir(
+                package_path, "parameter_files", parameter_file['name'])
+          else:
+            parameter_filepath = eval_utils.findFileOrDir(
+                self.root_folder, "parameter_files", parameter_file['name'])
         else:
-          parameter_filepath = eval_utils.findFileOrDir(
-              self.root_folder, "parameter_files", parameter_file['name'])
-      else:
-        raise Exception(
-            'Please provide a "name" entry and optionally a "package" entry in '
-            'the parameter_files listing.')
+          raise Exception(
+              'Please provide a "name" entry and optionally a "package" entry in '
+              'the parameter_files listing.')
+      elif type(parameter_file) == str:
+        parameter_filepath = parameter_file
+      else: 
+          raise Exception(
+              'Invalid type: ' + str(type(parameter_file)))
 
       self.parameter_files.add(
           eval_utils.findFileOrDir(self.root_folder, "parameter_files",
