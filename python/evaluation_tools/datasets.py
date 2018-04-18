@@ -241,9 +241,19 @@ def downloadDataset(dataset_name, replace=False):
       version_file.close()
 
   elif 'dir' in dataset:
-    print 'Starting copying of dataset to local folder...'
-    shutil.copyfile(dataset['dir'] + '/' + dataset['name'],
-                    local_data_dir + '/' + dataset['name'])
+    dataset_path = os.path.join(dataset['dir'], dataset['name'])
+    local_dataset_path = os.path.join(local_data_dir, dataset['name'])
+    if 'copy_file' in dataset and not dataset['copy_file']:
+      print 'Creating a symlink to the dataset...'
+      os.symlink(dataset_path, local_dataset_path)
+    else:
+      print 'Starting copying of dataset to local folder...'
+      if not os.path.isfile(dataset_path):
+        raise Exception(
+            "Can't copy file \"" + dataset_path +
+            "\" because it's not a file. If it's a directory, set the "
+            '"copy_file" attribute to false.')
+      shutil.copyfile(dataset_path, local_dataset_path)
     print 'Done.'
   else:
     raise Exception("Unclear how to download the dataset.")
