@@ -262,12 +262,11 @@ class Job(object):
     string = string.replace('<DATASET_LOG_DIR>',
                             self.dataset_log_dirs[dataset_index])
 
-    if len(self.additional_placeholders) > dataset_index:
-      for original, replacement in self.additional_placeholders[
-          dataset_index].iteritems():
-        # No index is supported for additional placeholders. These come from
-        # the additional dataset parameters.
-        string = string.replace(original, replacement)
+    for original, replacement in self.additional_placeholders[
+        dataset_index].iteritems():
+      # No index is supported for additional placeholders. These come from
+      # the additional dataset parameters.
+      string = string.replace(original, replacement)
 
     # Check that no substrings in the form of <...> are left.
     regex_result = re.search('<.*>', string)
