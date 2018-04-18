@@ -84,12 +84,32 @@ class Experiment(object):
           + '_' + self.eval_dict["experiment_name"]
 
     # Find sensors file:
-    sensors_file = ''
+    sensors_filepath = ''
     if 'sensors_file' in self.eval_dict.keys():
-      sensors_file = eval_utils.findFileOrDir(self.root_folder, "calibrations",
-                                              self.eval_dict['sensors_file'])
-    self.eval_dict['sensors_file'] = sensors_file
-    self.logger.info("Using sensors file: " + sensors_file)
+      #sensors_file = eval_utils.findFileOrDir(self.root_folder, "calibrations",
+      #                                        self.eval_dict['sensors_file'])
+      sensors_file = self.eval_dict['sensors_file']
+      if len(sensors_file) > 1:
+        raise Exception(
+          'There is more than one sensors file listed. This is '
+          'not supported.')
+      sensors_file = sensors_file[0]
+
+      if 'name' in sensors_file:
+        if 'package' in sensors_file:
+          package_path = catkin_utils.catkinFindSrc(sensors_file['package'])
+          sensors_filepath = eval_utils.findFileOrDir(
+              package_path, "calibrations", sensors_file['name'])
+        else:
+          sensors_filepath = eval_utils.findFileOrDir(
+              self.root_folder, "calibrations", sensors_file['name'])
+      else:
+        raise Exception(
+            'Please provide a "name" entry and optionally a "package" entry in '
+            'the sensors_file listing.')
+
+    self.eval_dict['sensors_file'] = sensors_filepath
+    self.logger.info("Using sensors file: " + sensors_filepath)
 
     # Find the map if there is any.
     if 'localization_map' in self.eval_dict.keys() and \
@@ -162,10 +182,23 @@ class Experiment(object):
 
     # Create set of parameter files
     self.parameter_files = set()
-    for filename in self.eval_dict["parameter_files"]:
+    for parameter_file in self.eval_dict["parameter_files"]:
+      if 'name' in parameter_file:
+        if 'package' in parameter_file:
+          package_path = catkin_utils.catkinFindSrc(parameter_file['package'])
+          parameter_filepath = eval_utils.findFileOrDir(
+              package_path, "parameter_files", parameter_file['name'])
+        else:
+          parameter_filepath = eval_utils.findFileOrDir(
+              self.root_folder, "parameter_files", parameter_file['name'])
+      else:
+        raise Exception(
+            'Please provide a "name" entry and optionally a "package" entry in '
+            'the parameter_files listing.')
+
       self.parameter_files.add(
           eval_utils.findFileOrDir(self.root_folder, "parameter_files",
-                                   filename))
+                                   parameter_filepath))
 
     # Create jobs for all dataset-parameter file combination.
     self.job_list = []
