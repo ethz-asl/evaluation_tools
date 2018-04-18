@@ -8,7 +8,7 @@ import logging
 import os
 import re
 import yaml
-import IPython
+
 
 class Job(object):
   """Contains the information to run the experiment (estimator and console)."""
