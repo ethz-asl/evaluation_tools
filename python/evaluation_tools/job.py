@@ -60,8 +60,8 @@ class Job(object):
               the folder where the experiment yaml is located in or one folder
               above.
         - results_folder: location to store the results in.
-        - experiment_dict: dictionary containing the loaded information from
-              the experiment yaml.
+        - experiment_dict: dictionary containing the loaded information from the
+              experiment yaml.
         - parameter_name: name of the parameter set of this job.
         - parameter_dict: dictionary containing all parameters for this job
               (loaded from the corresponding parameter yaml).
@@ -221,41 +221,40 @@ class Job(object):
     def replacePlaceholdersInString(self, string, dataset_index=0):
         """Replaces placeholders in a string with the actual value for the job.
 
-        This is used to adapt the parameters and console commands to the current
-        running job. Replaced placeholders include the current job directory,
-        the bag file and others.
+    This is used to adapt the parameters and console commands to the current
+    running job. Replaced placeholders include the current job directory, the
+    bag file and others.
 
-        Inputs:
-        - string: string in which placeholders should be replaced.
-        - dataset_index: (default: 0) index of the entry that should be used for
-              placeholders that don't contain an index (e.g. <BAG_FILENAME>
-              instead of <BAG_FILENAME_#>).
+    Inputs:
+    - string: string in which placeholders should be replaced.
+    - dataset_index: (default: 0) index of the entry that should be used for
+          placeholders that don't contain an index (e.g. <BAG_FILENAME> instead
+          of <BAG_FILENAME_#>).
 
-        Return value: input string with all placeholders replaced.
+    Return value: input string with all placeholders replaced.
 
-        Throws an exception if there are still "<" or ">" characters left in the
-        output string.
+    Throws an exception if there are still "<" or ">" characters left in the
+    output string.
 
-        The following placeholders exist (# refers to the dataset index):
-        - <BAG_FILENAME>: path to the dataset bag file.
-        - <BAG_FOLDER>: folder of the bag file.
-        - <SENSORS_YAML>: path to the sensor calibration file as specified in
-              the experiment yaml.
-        - <LOCALIZATION_MAP>: path to the localization map as specified in the
-              experiment yaml.
-        - <OUTPUT_MAP_FOLDER>, <OUTPUT_MAP_FOLDER_#>: suggested folder to save
-              the map in if it's needed for the console execution or the
-              evaluation
-              scripts.
-        - <DATASET_NAME>, <DATASET_NAME_#>, <OUTPUT_MAP_KEY>,
-          <OUTPUT_MAP_KEY_#>: dataset name, i.e. the basename of the bag path
-              without the '.bag' extension. This is the suggested map key to use
-              when the map is loaded into the console.
-        - <JOB_DIR>: path of the job.
-        - <DATASET_LOG_DIR>: suggested output folder for dataset-specific data,
-              i.e. primarily output data from the estimator. This will be equal
-              to <JOB_DIR>/estimator_output_<DATASET_NAME>
-        """
+    The following placeholders exist (# refers to the dataset index):
+    - <BAG_FILENAME>: path to the dataset bag file.
+    - <BAG_FOLDER>: folder of the bag file.
+    - <SENSORS_YAML>: path to the sensor calibration file as specified in the
+          experiment yaml.
+    - <LOCALIZATION_MAP>: path to the localization map as specified in the
+          experiment yaml.
+    - <OUTPUT_MAP_FOLDER>, <OUTPUT_MAP_FOLDER_#>: suggested folder to save the
+          map in if it's needed for the console execution or the evaluation
+          scripts.
+    - <DATASET_NAME>, <DATASET_NAME_#>, <OUTPUT_MAP_KEY>, <OUTPUT_MAP_KEY_#>:
+          dataset name, i.e. the basename of the bag path without the '.bag'
+          extension. This is the suggested map key to use when the map is loaded
+          into the console.
+    - <JOB_DIR>: path of the job.
+    - <DATASET_LOG_DIR>: suggested output folder for dataset-specific data,
+          i.e. primarily output data from the estimator.  This will be equal to
+          <JOB_DIR>/estimator_output_<DATASET_NAME>
+    """
         string = string.replace('<BAG_FILENAME>',
                                 self.dataset_paths[dataset_index])
         string = string.replace('<BAG_FOLDER>',
@@ -291,11 +290,12 @@ class Job(object):
         string = string.replace('<DATASET_LOG_DIR>',
                                 self.dataset_log_dirs[dataset_index])
 
-        for original, replacement in self.additional_placeholders[
-                dataset_index].iteritems():
-            # No index is supported for additional placeholders. These come from
-            # the additional dataset parameters.
-            string = string.replace(original, replacement)
+        if len(self.additional_placeholders) > dataset_index:
+            for original, replacement in self.additional_placeholders[
+                    dataset_index].iteritems():
+                # No index is supported for additional placeholders. These come
+                # from the additional dataset parameters.
+                string = string.replace(original, replacement)
 
         # Check that no substrings in the form of <...> are left.
         regex_result = re.search('<.*>', string)
@@ -309,8 +309,8 @@ class Job(object):
     def loadConfigFromFolder(self, job_path):
         """Loads the job configuration from disk.
 
-        Reads the file named job.yaml inside job_path to initialize the job.
-        """
+    Reads the file named job.yaml inside job_path to initialize the job.
+    """
         self.job_path = job_path
         self.logger = logging.getLogger(__name__)
 
@@ -341,14 +341,13 @@ class Job(object):
                 enable_console_progress_bars=True):
         """Runs the estimator and maplab console as defined in this job.
 
-        Input:
-        - skip_estimator: skips the estimator step of the job. Useful for
-              debugging.
-        - skip_console: skips the console step of the job. Useful for debugging.
-        - enable_console_progress_bars: if True, progress bars in the maplab
-              console will be disabled. This is useful when the output is
-              forwarded into a log file (e.g. on a Jenkins job).
-        """
+    Input:
+    - skip_estimator: skips the estimator step of the job. Useful for debugging.
+    - skip_console: skips the console step of the job. Useful for debugging.
+    - enable_console_progress_bars: if True, progress bars in the maplab
+          console will be disabled. This is useful when the output is forwarded
+          into a log file (e.g. on a Jenkins job).
+    """
         if not skip_estimator:
             # Run estimator.
             for params in self.params_dict:
