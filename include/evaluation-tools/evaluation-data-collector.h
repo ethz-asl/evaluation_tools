@@ -34,7 +34,9 @@ class EvaluationDataCollectorImpl {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef internal::ChannelGroup ChannelGroup;
-  typedef aslam::NFramesId SlotId;
+  //typedef aslam::NFramesId SlotId;
+  typedef int64_t SlotId;
+
   template<typename DataType> class PrintChannel;
   template<typename DataType> class PrintCommonChannel;
  private:
@@ -184,7 +186,7 @@ class EvaluationDataCollectorDummy {
     return false;
   }
   void removeSlotIfAvailable(const SlotId& /*slot_id*/) {}
-  void getAllSlotIds(std::unordered_set<SlotId>* slot_ids) const {}
+  void getAllSlotIds(std::unordered_set<SlotId>* /*slot_ids*/) const {}
   /// @}
 };
 

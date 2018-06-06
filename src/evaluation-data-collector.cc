@@ -5,16 +5,18 @@
 #include <tuple>
 #include <unordered_map>
 
+#include <aslam/common/time.h>
 #include <aslam/common/unique-id.h>
 #include <Eigen/Core>
 
 namespace evaluation {
 namespace internal {
 const EvaluationDataCollectorImpl::SlotId EvaluationDataCollectorImpl::kCommonSlotId =
-    EvaluationDataCollectorImpl::SlotId::Random();
+    aslam::time::getInvalidTime();
+    //EvaluationDataCollectorImpl::SlotId::Random();
 
 EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::getSlot(const SlotId& slot_id) {
-  CHECK(slot_id.isValid());
+  //CHECK(slot_id.isValid());
   std::lock_guard<std::mutex> lock(m_channel_groups_);
 
   SlotIdSlotMap::iterator it = channel_groups_.find(slot_id);
@@ -26,7 +28,7 @@ EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::getSlot(
 
 const EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::getSlot(
     const SlotId& slot_id) const {
-  CHECK(slot_id.isValid());
+  //CHECK(slot_id.isValid());
   std::lock_guard<std::mutex> lock(m_channel_groups_);
   SlotIdSlotMap::const_iterator it = channel_groups_.find(slot_id);
   if (it == channel_groups_.end()) {
@@ -37,7 +39,7 @@ const EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::ge
 
 EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::getSlotAndCreateIfNecessary(
     const SlotId& slot_id) {
-  CHECK(slot_id.isValid());
+  //CHECK(slot_id.isValid());
   std::lock_guard<std::mutex> lock(m_channel_groups_);
   SlotIdSlotMap::iterator iterator;
   bool inserted = false;
@@ -48,7 +50,7 @@ EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::getSlotA
 }
 
 void EvaluationDataCollectorImpl::removeSlotIfAvailable(const SlotId& slot_id) {
-  CHECK(slot_id.isValid());
+  //CHECK(slot_id.isValid());
   std::lock_guard<std::mutex> lock(m_channel_groups_);
   channel_groups_.erase(slot_id);
 }
