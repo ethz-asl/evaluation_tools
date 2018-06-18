@@ -222,18 +222,23 @@ def downloadDataset(dataset_name):
 
     elif 'dir' in dataset:
         dataset_path = os.path.join(dataset['dir'], dataset['name'])
+        if (not os.path.isfile(dataset_path)
+                and not os.path.isdir(dataset_path) and 'file_name' in dataset):
+            dataset_path = dataset['dir']
         local_dataset_path = os.path.join(local_data_dir, dataset['name'])
         if 'copy_file' in dataset and not dataset['copy_file']:
             print('Creating a symlink to the dataset...')
             os.symlink(dataset_path, local_dataset_path)
         else:
             print('Starting copying of dataset to local folder...')
-            if not os.path.isfile(dataset_path):
+            if os.path.isfile(dataset_path):
+                shutil.copyfile(dataset_path, local_dataset_path)
+            elif os.path.isdir(dataset_path):
+                shutil.copytree(dataset_path, local_dataset_path)
+            else:
                 raise Exception(
-                    "Can't copy file \"" + dataset_path +
-                    "\" because it's not a file. If it's a directory, set the "
-                    '"copy_file" attribute to false.')
-            shutil.copyfile(dataset_path, local_dataset_path)
+                    'Can\'t copy dataset under "%s" because no file or folder '
+                    'exists in the given path.' % dataset_path)
         print('Done.')
     else:
         raise Exception("Unclear how to download the dataset.")
