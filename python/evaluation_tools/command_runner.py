@@ -19,7 +19,8 @@ def runCommand(exec_path, params_dict=None):
     """Runs a system command with parameters coming from a python dictionary.
 
     Input:
-    - exec_path: path to the executable.
+    - exec_path: path to the executable. Can optionally be of the form
+        `rosrun package app`.
     - params_dict: dictionary in the form {key: value} which contains the
         additional arguments for the command.
 
@@ -37,9 +38,8 @@ def runCommand(exec_path, params_dict=None):
     if params_dict is None:
         params_dict = {}
     cmd_seq = []
-    if exec_path and os.path.isfile(exec_path):
-        if exec_path.endswith('.py'):
-            cmd_seq.append('python')
+    if exec_path and (os.path.isfile(exec_path)
+                      or exec_path.startswith('rosrun')):
         cmd_seq.append(exec_path)
     else:
         raise ValueError("No file under " + exec_path + " exists.")
@@ -47,12 +47,12 @@ def runCommand(exec_path, params_dict=None):
     for param in params_dict:
         param_value = str(params_dict[param])
         if ' ' not in param_value:
-            # Use '--name=value' per default because gflags doesn't recognize
-            # spaces (as in '--name value') in some case (bool flags).
+            # Use '--name=value' per default because gflags does not recognize
+            # spaces (as in '--name value') in some cases (bool flags).
             separator = '='
         else:
-            # Don't use '=' as separator if the value contains spaces to support
-            # Python argparse's nargs option.
+            # Do not use '=' as separator if the value contains spaces to
+            # support Python argparse's nargs option.
             separator = ' '
         cmd_seq.append("--" + param + separator + param_value)
 

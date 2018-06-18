@@ -40,10 +40,21 @@ class Evaluation(object):
             self.logger.info("=== Run Evaluation ===")
             if 'name' in evaluation:
                 if 'package' in evaluation:
-                    package_path = catkin_utils.catkinFindLib(
-                        evaluation['package'])
-                    evaluation_script_with_path = os.path.join(
-                        package_path, evaluation['name'])
+                    evaluation_script_with_path = None
+                    try:
+                        package_path = catkin_utils.catkinFindLib(
+                            evaluation['package'])
+                        evaluation_script_with_path = os.path.join(
+                            package_path, evaluation['name'])
+                    except ValueError:
+                        pass
+                    if (evaluation_script_with_path is None or
+                            not os.path.isfile(evaluation_script_with_path)
+                        ):
+                        # Python script: script lies within package, run
+                        # with rosrun.
+                        evaluation_script_with_path = 'rosrun %s %s' % (
+                            evaluation['package'], evaluation['name'])
                 else:
                     evaluation_script = evaluation['name']
                     evaluation_script_with_path = eval_utils.findFileOrDir(
