@@ -47,12 +47,12 @@ def runCommand(exec_path, params_dict=None):
     for param in params_dict:
         param_value = str(params_dict[param])
         if ' ' not in param_value:
-            # Use '--name=value' per default because gflags doesn't recognize
+            # Use '--name=value' per default because gflags does not recognize
             # spaces (as in '--name value') in some cases (bool flags).
             separator = '='
         else:
-            # Don't use '=' as separator if the value contains spaces to support
-            # Python argparse's nargs option.
+            # Do not use '=' as separator if the value contains spaces to
+            # support Python argparse's nargs option.
             separator = ' '
         cmd_seq.append("--" + param + separator + param_value)
 
