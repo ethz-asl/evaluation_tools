@@ -184,7 +184,7 @@ class EvaluationDataCollectorDummy {
     return false;
   }
   void removeSlotIfAvailable(const SlotId& /*slot_id*/) {}
-  void getAllSlotIds(std::unordered_set<SlotId>* slot_ids) const {}
+  void getAllSlotIds(std::unordered_set<SlotId>* /*slot_ids*/) const {}
   /// @}
 };
 
