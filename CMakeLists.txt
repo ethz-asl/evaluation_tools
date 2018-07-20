@@ -14,6 +14,15 @@ cs_add_library(${PROJECT_NAME} src/evaluation-data-collector.cc)
 
 cs_add_executable(dummy_app_for_unit_test src/test/dummy-app-for-unit-test.cc)
 
+# Add executables.
+cs_install_scripts(
+    scripts/dataset_tools
+    scripts/evaluation
+    scripts/job
+    scripts/run_experiment
+    scripts/simple_summarization
+)
+
 #########
 # TESTS #
 #########

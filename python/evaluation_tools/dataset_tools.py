@@ -246,7 +246,7 @@ def downloadDataset(dataset_name):
     return getPathForDataset(dataset_name)
 
 
-if __name__ == '__main__':
+def main():
     usage = """
         List and download available Zurich-Eye datasets.
     """

@@ -371,7 +371,7 @@ class SimpleSummarization(object):
         return result_dict
 
 
-if __name__ == '__main__':
+def main():
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)

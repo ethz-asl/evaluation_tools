@@ -283,7 +283,7 @@ class Experiment(object):
             s.runSummarization()
 
 
-if __name__ == '__main__':
+def main():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logger.info('Experiment started')

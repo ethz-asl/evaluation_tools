@@ -395,7 +395,7 @@ class Job(object):
             summary_dict, stream=out_file_stream, default_flow_style=False)
 
 
-if __name__ == '__main__':
+def main():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
