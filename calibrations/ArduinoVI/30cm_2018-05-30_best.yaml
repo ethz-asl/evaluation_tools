@@ -1,0 +1,106 @@
+sensors:
+  - sensor_type: IMU
+    hardware_id: /arduino_vi/imu
+    id: d8a7704b6d9216b75c8098454e848f20
+    sigmas:
+      gyro_noise_density: 0.00384
+      gyro_bias_random_walk_noise_density: 5.8178e-05
+      acc_noise_density: 0.0221
+      acc_bias_random_walk_noise_density: 0.000733
+    saturation_accel_max_mps2: 150.0
+    saturation_gyro_max_radps: 7.5
+    gravity_magnitude_mps2: 9.808083883386614
+ncameras:
+  - label: ncamera
+    id: 8af1bac2a7c5fad79f09e49e3b96d87c
+    cameras:
+      - camera:
+          label: /bas_usb_0/image_mono
+          id: 9be7b5000f15adb3c0da8ac6b729ee05
+          line-delay-nanoseconds: 0
+          image_height: 1200
+          image_width: 1920
+          type: pinhole
+          intrinsics:
+            rows: 4
+            cols: 1
+            data:
+              - 1404.1896665077618
+              - 1403.544300468507
+              - 987.6572089109237
+              - 586.2064176843021
+          distortion:
+            type: equidistant
+            parameters:
+              rows: 4
+              cols: 1
+              data:
+                - 0.15900912485155352
+                - 0.09016719657628212
+                - 0.07884492361797733
+                - 0.1516050246184044
+        T_B_C:
+          rows: 4
+          cols: 4
+          data:
+            - 0.9999702396490133
+            - 0.007131636513633809
+            - 0.00294271591095978
+            - 0.04026683321207823
+            - -0.0028224291902492747
+            - -0.016818408817945496
+            - 0.9998545769352155
+            - 0.059345278773084334
+            - 0.0071800912084206605
+            - -0.9998331265193557
+            - -0.016797779757125708
+            - 0.007012677119668381
+            - 0.0
+            - 0.0
+            - 0.0
+            - 1.0
+      - camera:
+          label: /bas_usb_1/image_mono
+          id: ac4704b6b1b4cf41b0924ecb7bd863ec
+          line-delay-nanoseconds: 0
+          image_height: 1200
+          image_width: 1920
+          type: pinhole
+          intrinsics:
+            rows: 4
+            cols: 1
+            data:
+              - 1401.559808010967
+              - 1400.768989212361
+              - 981.9666840646828
+              - 598.2896158471824
+          distortion:
+            type: equidistant
+            parameters:
+              rows: 4
+              cols: 1
+              data:
+                - 0.16363020535601513
+                - 0.10290637417042532
+                - -0.017248918557491118
+                - 0.2860300685228897
+        T_B_C:
+          rows: 4
+          cols: 4
+          data:
+            - 0.9998925651479422
+            - 0.010064129140050374
+            - 0.010656991438532628
+            - -0.2699424085324936
+            - -0.010625576236460202
+            - -0.003169831825476921
+            - 0.9999385227581953
+            - 0.06056296296322965
+            - 0.01009729129577537
+            - -0.9999443311859172
+            - -0.003062554103632653
+            - 0.00480200850563367
+            - 0.0
+            - 0.0
+            - 0.0
+            - 1.0

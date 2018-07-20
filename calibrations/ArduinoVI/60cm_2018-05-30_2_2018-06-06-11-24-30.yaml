@@ -1,0 +1,114 @@
+sensors:
+  - id: d8a7704b6d9216b75c8098454e848f20
+    sensor_type: IMU
+    hardware_id: /arduino_vi/imu
+    sigmas:
+      gyro_noise_density: 0.00384
+      gyro_bias_random_walk_noise_density: 5.8178e-05
+      acc_noise_density: 0.0221
+      acc_bias_random_walk_noise_density: 0.000733
+    saturation_accel_max_mps2: 150
+    saturation_gyro_max_radps: 7.5
+    gravity_magnitude_mps2: 9.808083883386614
+ncameras:
+  - label: ncamera
+    id: 8af1bac2a7c5fad79f09e49e3b96d87c
+    cameras:
+      - camera:
+          label: /bas_usb_0/image_mono
+          id: 9be7b5000f15adb3c0da8ac6b729ee05
+          line-delay-nanoseconds: 0
+          image_height: 1200
+          image_width: 1920
+          type: pinhole
+          intrinsics:
+            rows: 4
+            cols: 1
+            data:
+              - 1404.189666507762
+              - 1403.544300468507
+              - 987.6572089109237
+              - 586.2064176843021
+          distortion:
+            type: equidistant
+            parameters:
+              rows: 4
+              cols: 1
+              data:
+                - 0.1590091248515535
+                - 0.09016719657628212
+                - 0.07884492361797733
+                - 0.1516050246184044
+        T_B_C:
+          rows: 4
+          cols: 4
+          data:
+            - 0.9999702396490131
+            - 0.007131636513633809
+            - 0.002942715910959783
+            - 0.04026683321207821
+            - -0.002822429190249275
+            - -0.01681840881794594
+            - 0.9998545769352155
+            - 0.05934527877308429
+            - 0.007180091208420661
+            - -0.9998331265193557
+            - -0.01679777975712615
+            - 0.007012677119668367
+            - 0
+            - 0
+            - 0
+            - 1
+      - camera:
+          label: /bas_usb_1/image_mono
+          id: ac4704b6b1b4cf41b0924ecb7bd863ec
+          line-delay-nanoseconds: 0
+          image_height: 1200
+          image_width: 1920
+          type: pinhole
+          intrinsics:
+            rows: 4
+            cols: 1
+            data:
+              - 1401.559808010967
+              - 1400.768989212361
+              - 981.9666840646828
+              - 598.2896158471824
+          distortion:
+            type: equidistant
+            parameters:
+              rows: 4
+              cols: 1
+              data:
+                - 0.1636302053560151
+                - 0.1029063741704253
+                - -0.01724891855749112
+                - 0.2860300685228897
+        T_B_C:
+          rows: 4
+          cols: 4
+          data:
+            - 0.9998790410447601
+            - 0.007229922751146502
+            - 0.01377067523483563
+            - -0.6090628070767136
+            - -0.01367976053159542
+            - -0.01247714485989015
+            - 0.9998285778111883
+            - 0.07566762774318299
+            - 0.007400502091687106
+            - -0.9998960191305682
+            - -0.01237673202558587
+            - 0.006364345825562515
+            - 0
+            - 0
+            - 0
+            - 1
+mission_sensors_associations:
+  - mission_id: 82ebe4402df940150e00000000000000
+    sensor_ids:
+      - sensor_id: d8a7704b6d9216b75c8098454e848f20
+mission_ncamera_associations:
+  - mission_id: 82ebe4402df940150e00000000000000
+    ncamera_id: 8af1bac2a7c5fad79f09e49e3b96d87c
+mission_optional_ncamera_associations: ~

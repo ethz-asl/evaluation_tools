@@ -1,0 +1,42 @@
+parameter_sweep:
+  name: swe_estimator_rate
+  min: 5
+  max: 50
+  step_size: 5
+v: 2
+logtostderr: 1
+colorlogtostderr: 1
+swe_cam_rate: 50
+vio_camera_topic_suffix: 
+swe_stationary_attitude_init: 0
+swe_sensors_yaml: 
+swe_datasource: 
+swe_rosbag_filename: 
+swe_write_csv: 0
+swe_show_visualization_window: 1
+swe_build_map: 1
+swe_localization_visualization: 1
+swe_rosbag_realtime_playback: 0
+swe_num_keyframes: 
+swe_publish_pose_with_covariance: rue \
+swe_print_residuals_after_update:false \
+use_stereo_matching:$s \
+stereo_visualization:false \
+stereo_matcher_epipolar_threshold:0.001 \
+swe_depth_error_m_sigma:0.01 \
+swe_depth_error_cauchy_k_cutoff:20 \
+swe_depth_error_cauchy_k_max:5 \
+feature_tracking_gridded_detector_use_gridded:true \
+feature_tracking_gridded_detector_cell_num_features_scaler:1.0 \
+feature_tracking_gridded_detector_num_grid_cols:8 \
+feature_tracking_gridded_detector_num_grid_rows:4 \
+feature_tracking_detector_orb_num_features:2000 \
+feature_tracking_detector_orb_fast_threshold:2 \
+feature_tracking_detector_nms_ratio_threshold:0.9 \
+feature_tracking_detector_max_feature_count:1000 \
+feature_tracking_detector_nms_radius:8.0 \
+feature_tracking_detector_orb_scale_factor:1.6 \
+feature_tracking_detector_orb_pyramid_levels:3 \
+gyro_lk_window_size:21 \
+gyro_matcher_small_search_distance_px:10 \
+gyro_matcher_large_search_distance_px:20"
