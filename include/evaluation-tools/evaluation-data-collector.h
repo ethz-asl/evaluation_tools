@@ -12,30 +12,37 @@
 
 namespace evaluation {
 namespace internal {
+template <class SlotIdType>
 class EvaluationDataCollectorImpl;
+
+template <class SlotIdType>
 class EvaluationDataCollectorDummy;
 }
 
 template<typename DataType> class Channel;
 
-#undef ENABLE_DATA_COLLECTOR
+#define ENABLE_DATA_COLLECTOR
 
 #ifdef ENABLE_DATA_COLLECTOR
-  typedef internal::EvaluationDataCollectorImpl EvaluationDataCollector;
+  typedef internal::EvaluationDataCollectorImpl<int64_t> EvaluationDataCollector;
+  typedef internal::EvaluationDataCollectorImpl<aslam::NFramesId> EvaluationDataCollectorNFrameId;
+
 #else
-  typedef internal::EvaluationDataCollectorDummy EvaluationDataCollector;
+  typedef internal::EvaluationDataCollectorDummy<int64_t> EvaluationDataCollector;
+  typedef internal::EvaluationDataCollectorDummy<aslam::NFramesId> EvaluationDataCollectorNFrameId;
 #endif
 
 namespace internal {
 /// \class EvaluationDataCollector
 /// \brief This class is implemented as a singleton to collect arbitrary evaluation data that
 ///        can be associated with an aslam::NFrame id.
+template <class SlotIdType>
 class EvaluationDataCollectorImpl {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef internal::ChannelGroup ChannelGroup;
   //typedef aslam::NFramesId SlotId;
-  typedef int64_t SlotId;
+  typedef SlotIdType SlotId;
 
   template<typename DataType> class PrintChannel;
   template<typename DataType> class PrintCommonChannel;
@@ -118,10 +125,11 @@ class EvaluationDataCollectorImpl {
 
 /// \class DummyEvaluationDataCollector
 /// \brief A dummy class that has the evaluation interface but does nothing.
+template <class SlotIdType>
 class EvaluationDataCollectorDummy {
  public:
   template<typename DataType> class PrintChannel;
-  typedef EvaluationDataCollectorImpl::SlotId SlotId;
+  typedef SlotIdType SlotId;
 
  private:
   // Singleton class.
@@ -193,33 +201,35 @@ class EvaluationDataCollectorDummy {
 /// \class PrintChannel
 /// \brief Helper to conveniently print channels that implement an operator<<
 /// \code LOG(INFO) << EvaluationDataCollector::PrintChannel<size_t>(slot_id, "channel_name");
+template <class SlotIdType>
 template<typename DataType>
-class EvaluationDataCollectorImpl::PrintChannel {
+class EvaluationDataCollectorImpl<SlotIdType>::PrintChannel {
  public:
   friend EvaluationDataCollectorImpl;
-  explicit PrintChannel(const EvaluationDataCollectorImpl::SlotId& slot_id,
+  explicit PrintChannel(const EvaluationDataCollectorImpl<SlotIdType>::SlotId& slot_id,
                         const std::string& channel_name)
       : slot_id_(slot_id), channel_name_(channel_name) {}
 
   explicit PrintChannel(const std::string& channel_name)
-      : slot_id_(EvaluationDataCollectorImpl::kCommonSlotId), channel_name_(channel_name) {}
+      : slot_id_(EvaluationDataCollectorImpl<SlotIdType>::kCommonSlotId), channel_name_(channel_name) {}
 
   inline friend std::ostream& operator<<(std::ostream& out,
                                          const PrintChannel<DataType>& channel) {
-    out << EvaluationDataCollectorImpl::Instance().printData<DataType>(
+    out << EvaluationDataCollectorImpl<SlotIdType>::Instance().printData<DataType>(
         channel.slot_id_, channel.channel_name_);
     return out;
   }
  private:
-  const EvaluationDataCollectorImpl::SlotId& slot_id_;
+  const EvaluationDataCollectorImpl<SlotIdType>::SlotId& slot_id_;
   const std::string& channel_name_;
 };
 
+template <class SlotIdType>
 template<typename DataType>
-class EvaluationDataCollectorDummy::PrintChannel {
+class EvaluationDataCollectorDummy<SlotIdType>::PrintChannel {
  public:
   friend EvaluationDataCollectorDummy;
-  explicit PrintChannel(const EvaluationDataCollectorImpl::SlotId&, const std::string&) {};
+  explicit PrintChannel(const SlotIdType&, const std::string&) {};
   explicit PrintChannel(const std::string&) {};
   inline friend std::ostream& operator<<(std::ostream& out, const PrintChannel<DataType>&) {
     out << "NA";
@@ -229,5 +239,10 @@ class EvaluationDataCollectorDummy::PrintChannel {
 
 }  // namespace internal
 }  // namespace evaluation
+
+namespace std {
+string to_string(const aslam::NFramesId& slot_id);
+}
+
 #include "internal/evaluation-data-collector-inl.h"
 #endif  // EVALUATION_TOOLS_EVALUATION_DATA_COLLECTOR_H_
