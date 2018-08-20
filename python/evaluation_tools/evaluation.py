@@ -55,6 +55,7 @@ class Evaluation(object):
 
             params_dict = {
                 "job_dir": self.job_dir,
+                "sensors_filepath": self.job.sensors_file,
                 "localization_map": self.job.info['localization_map'],
                 "additional_dataset_parameters":
                 additional_dataset_parameters_str
