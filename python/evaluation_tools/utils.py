@@ -57,7 +57,7 @@ def findFileOrDir(root_folder, base_folder, file_name):
     if os.path.isfile(file_name_to_try_3) or os.path.isdir(file_name_to_try_3):
         return file_name_to_try_3
 
-    raise Exception(
-        'Unable to find the file "' + file_name + '". Checked in:\n- ' +
-        file_name + '\n- ' + file_name_to_try_1 + '\n -' + file_name_to_try_2 +
-        '\n- ' + file_name_to_try_3)
+    raise Exception('Unable to find the file "' + file_name +
+                    '". Checked in:\n- ' + file_name + '\n- ' +
+                    file_name_to_try_1 + '\n -' + file_name_to_try_2 + '\n- ' +
+                    file_name_to_try_3)

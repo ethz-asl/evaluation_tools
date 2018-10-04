@@ -68,13 +68,11 @@ class Metric(object):
             self.mean = (self.mean * self.count + other.mean * other.count) \
                 / (self.count + other.count)
 
-            self.var = (((self.count - 1) * self.var +
-                         (other.count - 1) * other.var +
-                         (self.count * other.count) /
-                         (self.count + other.count) *
-                         (self.mean * self.mean + other.mean * other.mean -
-                          2 * self.mean * other.mean)) /
-                        (self.count + other.count - 1))
+            self.var = ((
+                (self.count - 1) * self.var + (other.count - 1) * other.var +
+                (self.count * other.count) / (self.count + other.count) *
+                (self.mean * self.mean + other.mean * other.mean -
+                 2 * self.mean * other.mean)) / (self.count + other.count - 1))
             self.stddev = sqrt(self.var)
 
             self.min = min(self.min, other.min)

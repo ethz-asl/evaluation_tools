@@ -39,8 +39,8 @@ class Experiment(object):
 
         self.logger.info("Checking parameters")
         if not os.path.isfile(experiment_file):
-            raise Exception(
-                'The experiment file "' + experiment_file + "' doesn't exist.")
+            raise Exception('The experiment file "' + experiment_file +
+                            "' doesn't exist.")
 
         experiment_file = os.path.realpath(experiment_file)
         self.root_folder = os.path.dirname(experiment_file)
@@ -276,8 +276,8 @@ class Experiment(object):
 
             files_to_summarize = []
             for job in self.job_list:
-                files_to_summarize.append(
-                    job.job_path + "/formatted_stats.yaml")
+                files_to_summarize.append(job.job_path +
+                                          "/formatted_stats.yaml")
 
             s = SimpleSummarization(files_to_summarize, whitelist, blacklist)
             s.runSummarization()

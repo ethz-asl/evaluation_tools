@@ -110,9 +110,9 @@ def _download_reporthook(count, block_size, total_size):
     speed = int(progress_size / (1024 * duration))
     percent = int(count * block_size * 100 / total_size)
     if enable_download_progress_bar:
-        sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
-                         (percent, progress_size / (1024 * 1024), speed,
-                          duration))
+        sys.stdout.write(
+            "\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
+            (percent, progress_size / (1024 * 1024), speed, duration))
     sys.stdout.flush()
 
 
@@ -150,8 +150,8 @@ def getPathForDataset(dataset_name):
     assert dataset_name in downloaded_datasets
     datasets = getDatasetList()
     if dataset_name not in datasets:
-        raise ValueError(
-            'Dataset ' + dataset_name + ' is not listed in datasets.yaml')
+        raise ValueError('Dataset ' + dataset_name +
+                         ' is not listed in datasets.yaml')
     dataset = datasets[dataset_name]
     if 'file_name' in dataset:
         return os.path.join(data_dir, dataset_name, dataset['file_name'])
@@ -165,8 +165,9 @@ def downloadDataset(dataset_name):
     # Check that dataset_name is valid:
     datasets = getDatasetList()
     if dataset_name not in datasets:
-        logger.warning("Dataset: %s is not valid. Check datasets.yaml"
-                       " for available datasets.", dataset_name)
+        logger.warning(
+            "Dataset: %s is not valid. Check datasets.yaml"
+            " for available datasets.", dataset_name)
         return
     dataset = datasets[dataset_name]
 
@@ -208,8 +209,8 @@ def downloadDataset(dataset_name):
                 logger.info(
                     "Successfully verified hash-key of downloaded file")
             else:
-                raise ValueError(
-                    "Hash of downloaded dataset is not valid: " + filename)
+                raise ValueError("Hash of downloaded dataset is not valid: " +
+                                 filename)
 
         # unpack tar.gz
         if local_filename.split(".")[-2] == 'tar' and local_filename.split(

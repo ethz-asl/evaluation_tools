@@ -55,8 +55,8 @@ def catkinFindCamCalib(ze_cam_id):
         if os.path.exists(cam_calib_folder) and os.path.isdir(
                 cam_calib_folder):
             return cam_calib_folder
-    raise ValueError(
-        "Could not find calibration folder for ZE camera id " + str(ze_cam_id))
+    raise ValueError("Could not find calibration folder for ZE camera id " +
+                     str(ze_cam_id))
 
 
 def catkinFindTestData(req_sub_folder):

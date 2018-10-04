@@ -4,12 +4,13 @@ namespace evaluation {
 namespace internal {
 
 template <>
-const EvaluationDataCollectorImpl<int64_t>::SlotId EvaluationDataCollectorImpl<int64_t>::kCommonSlotId =
-    aslam::time::getInvalidTime();
+const EvaluationDataCollectorImpl<int64_t>::SlotId EvaluationDataCollectorImpl<
+    int64_t>::kCommonSlotId = aslam::time::getInvalidTime();
 
 template <>
-const EvaluationDataCollectorImpl<aslam::NFramesId>::SlotId EvaluationDataCollectorImpl<aslam::NFramesId>::kCommonSlotId =
-    aslam::NFramesId::Random();
+const EvaluationDataCollectorImpl<aslam::NFramesId>::SlotId
+    EvaluationDataCollectorImpl<aslam::NFramesId>::kCommonSlotId =
+        aslam::NFramesId::Random();
 
 }  // namespace internal
 }  // namespace evaluation

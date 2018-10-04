@@ -54,6 +54,7 @@ class Evaluation(object):
                     'entry in the evaluation script listing.')
 
             params_dict = {
+                "experiment_name": self.job.info['experiment_filename'],
                 "job_dir": self.job_dir,
                 "sensors_filepath": self.job.sensors_file,
                 "localization_map": self.job.info['localization_map'],

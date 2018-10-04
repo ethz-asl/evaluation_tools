@@ -5,8 +5,8 @@
 #include <string>
 #include <unordered_map>
 
-#include <aslam/common/unique-id.h>
 #include <Eigen/Core>
+#include <aslam/common/unique-id.h>
 
 #include "evaluation-tools/internal/channel.h"
 
@@ -19,33 +19,40 @@ template <class SlotIdType>
 class EvaluationDataCollectorDummy;
 }
 
-template<typename DataType> class Channel;
+template <typename DataType>
+class Channel;
 
 #define ENABLE_DATA_COLLECTOR
 
 #ifdef ENABLE_DATA_COLLECTOR
-  typedef internal::EvaluationDataCollectorImpl<int64_t> EvaluationDataCollector;
-  typedef internal::EvaluationDataCollectorImpl<aslam::NFramesId> EvaluationDataCollectorNFrameId;
+typedef internal::EvaluationDataCollectorImpl<int64_t> EvaluationDataCollector;
+typedef internal::EvaluationDataCollectorImpl<aslam::NFramesId>
+    EvaluationDataCollectorNFrameId;
 
 #else
-  typedef internal::EvaluationDataCollectorDummy<int64_t> EvaluationDataCollector;
-  typedef internal::EvaluationDataCollectorDummy<aslam::NFramesId> EvaluationDataCollectorNFrameId;
+typedef internal::EvaluationDataCollectorDummy<int64_t> EvaluationDataCollector;
+typedef internal::EvaluationDataCollectorDummy<aslam::NFramesId>
+    EvaluationDataCollectorNFrameId;
 #endif
 
 namespace internal {
 /// \class EvaluationDataCollector
-/// \brief This class is implemented as a singleton to collect arbitrary evaluation data that
+/// \brief This class is implemented as a singleton to collect arbitrary
+/// evaluation data that
 ///        can be associated with an aslam::NFrame id.
 template <class SlotIdType>
 class EvaluationDataCollectorImpl {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   typedef internal::ChannelGroup ChannelGroup;
-  //typedef aslam::NFramesId SlotId;
+  // typedef aslam::NFramesId SlotId;
   typedef SlotIdType SlotId;
 
-  template<typename DataType> class PrintChannel;
-  template<typename DataType> class PrintCommonChannel;
+  template <typename DataType>
+  class PrintChannel;
+  template <typename DataType>
+  class PrintCommonChannel;
+
  private:
   // Singleton class.
   EvaluationDataCollectorImpl() = default;
@@ -63,7 +70,8 @@ class EvaluationDataCollectorImpl {
     channel_groups_.clear();
   }
 
-  // Check if EvaluationDataCollector is enabled or dummy implementation is used.
+  // Check if EvaluationDataCollector is enabled or dummy implementation is
+  // used.
   constexpr static bool isEnabled() {
     return true;
   }
@@ -73,28 +81,33 @@ class EvaluationDataCollectorImpl {
   /// @{
  public:
   /// Methods to store and access data indexed by a SlotId.
-  template<typename DataType>
-  void pushData(const SlotId& slot_id, const std::string& channel_name, const DataType& data);
-  template<typename DataType>
-  bool getDataSafe(const SlotId& slot_id, const std::string& channel_name,
-                   const DataType** data) const;
+  template <typename DataType>
+  void pushData(
+      const SlotId& slot_id, const std::string& channel_name,
+      const DataType& data);
+  template <typename DataType>
+  bool getDataSafe(
+      const SlotId& slot_id, const std::string& channel_name,
+      const DataType** data) const;
   bool hasChannel(const SlotId& slot_id, const std::string& channel_name) const;
-  template<typename DataType>
-  std::string printData(const SlotId& slot_id, const std::string& channel_name) const;
+  template <typename DataType>
+  std::string printData(
+      const SlotId& slot_id, const std::string& channel_name) const;
 
   /// Methods to access a common slot for store and access unindexed data.
-  template<typename DataType>
+  template <typename DataType>
   void pushCommonData(const std::string& channel_name, const DataType& data) {
     return pushData<DataType>(kCommonSlotId, channel_name, data);
   }
-  template<typename DataType>
-  bool getCommonDataSafe(const std::string& channel_name, const DataType** data) const {
+  template <typename DataType>
+  bool getCommonDataSafe(
+      const std::string& channel_name, const DataType** data) const {
     return getDataSafe<DataType>(kCommonSlotId, channel_name, data);
   }
   bool hasCommonChannel(const std::string& channel_name) const {
     return hasChannel(kCommonSlotId, channel_name);
   }
-  template<typename DataType>
+  template <typename DataType>
   std::string printCommonData(const std::string& channel_name) const {
     return printData<DataType>(kCommonSlotId, channel_name);
   }
@@ -128,7 +141,8 @@ class EvaluationDataCollectorImpl {
 template <class SlotIdType>
 class EvaluationDataCollectorDummy {
  public:
-  template<typename DataType> class PrintChannel;
+  template <typename DataType>
+  class PrintChannel;
   typedef SlotIdType SlotId;
 
  private:
@@ -144,7 +158,8 @@ class EvaluationDataCollectorDummy {
   }
   void reset() {}
 
-  // Check if EvaluationDataCollector is enabled or dummy implementation is used.
+  // Check if EvaluationDataCollector is enabled or dummy implementation is
+  // used.
   constexpr static bool isEnabled() {
     return false;
   }
@@ -154,33 +169,39 @@ class EvaluationDataCollectorDummy {
   /// @{
  public:
   /// Methods to store and access data indexed by a SlotId.
-  template<typename DataType>
-  void pushData(const SlotId& /*slot_id*/, const std::string& /*channel_name*/,
-                const DataType& /*data*/) {}
-  template<typename DataType>
-  bool getDataSafe(const SlotId& /*slot_id*/, const std::string& /*channel_name*/,
-                   const DataType** /*data*/) const {
+  template <typename DataType>
+  void pushData(
+      const SlotId& /*slot_id*/, const std::string& /*channel_name*/,
+      const DataType& /*data*/) {}
+  template <typename DataType>
+  bool getDataSafe(
+      const SlotId& /*slot_id*/, const std::string& /*channel_name*/,
+      const DataType** /*data*/) const {
     return false;
   }
-  bool hasChannel(const SlotId& /*slot_id*/, const std::string& /*channel_name*/) const {
+  bool hasChannel(
+      const SlotId& /*slot_id*/, const std::string& /*channel_name*/) const {
     return false;
   }
-  template<typename DataType>
-  std::string printData(const SlotId& /*slot_id*/, const std::string& /*channel_name*/) const {
+  template <typename DataType>
+  std::string printData(
+      const SlotId& /*slot_id*/, const std::string& /*channel_name*/) const {
     return std::string("");
   }
 
   /// Methods to access a common slot for store and access unindexed data.
-  template<typename DataType>
-  void pushCommonData(const std::string& /*channel_name*/, const DataType& /*data*/) {}
-  template<typename DataType>
-  bool getCommonDataSafe(const std::string& /*channel_name*/, const DataType** /*data*/) const {
+  template <typename DataType>
+  void pushCommonData(
+      const std::string& /*channel_name*/, const DataType& /*data*/) {}
+  template <typename DataType>
+  bool getCommonDataSafe(
+      const std::string& /*channel_name*/, const DataType** /*data*/) const {
     return false;
   }
   bool hasCommonChannel(const std::string& /*channel_name*/) const {
     return false;
   }
-  template<typename DataType>
+  template <typename DataType>
   std::string printCommonData(const std::string& /*channel_name*/) {
     return std::string("");
   }
@@ -200,38 +221,43 @@ class EvaluationDataCollectorDummy {
 
 /// \class PrintChannel
 /// \brief Helper to conveniently print channels that implement an operator<<
-/// \code LOG(INFO) << EvaluationDataCollector::PrintChannel<size_t>(slot_id, "channel_name");
+/// \code LOG(INFO) << EvaluationDataCollector::PrintChannel<size_t>(slot_id,
+/// "channel_name");
 template <class SlotIdType>
-template<typename DataType>
+template <typename DataType>
 class EvaluationDataCollectorImpl<SlotIdType>::PrintChannel {
  public:
   friend EvaluationDataCollectorImpl;
-  explicit PrintChannel(const EvaluationDataCollectorImpl<SlotIdType>::SlotId& slot_id,
-                        const std::string& channel_name)
+  explicit PrintChannel(
+      const EvaluationDataCollectorImpl<SlotIdType>::SlotId& slot_id,
+      const std::string& channel_name)
       : slot_id_(slot_id), channel_name_(channel_name) {}
 
   explicit PrintChannel(const std::string& channel_name)
-      : slot_id_(EvaluationDataCollectorImpl<SlotIdType>::kCommonSlotId), channel_name_(channel_name) {}
+      : slot_id_(EvaluationDataCollectorImpl<SlotIdType>::kCommonSlotId),
+        channel_name_(channel_name) {}
 
-  inline friend std::ostream& operator<<(std::ostream& out,
-                                         const PrintChannel<DataType>& channel) {
-    out << EvaluationDataCollectorImpl<SlotIdType>::Instance().printData<DataType>(
-        channel.slot_id_, channel.channel_name_);
+  inline friend std::ostream& operator<<(
+      std::ostream& out, const PrintChannel<DataType>& channel) {
+    out << EvaluationDataCollectorImpl<SlotIdType>::Instance()
+               .printData<DataType>(channel.slot_id_, channel.channel_name_);
     return out;
   }
+
  private:
   const EvaluationDataCollectorImpl<SlotIdType>::SlotId& slot_id_;
   const std::string& channel_name_;
 };
 
 template <class SlotIdType>
-template<typename DataType>
+template <typename DataType>
 class EvaluationDataCollectorDummy<SlotIdType>::PrintChannel {
  public:
   friend EvaluationDataCollectorDummy;
-  explicit PrintChannel(const SlotIdType&, const std::string&) {};
-  explicit PrintChannel(const std::string&) {};
-  inline friend std::ostream& operator<<(std::ostream& out, const PrintChannel<DataType>&) {
+  explicit PrintChannel(const SlotIdType&, const std::string&){};
+  explicit PrintChannel(const std::string&){};
+  inline friend std::ostream& operator<<(
+      std::ostream& out, const PrintChannel<DataType>&) {
     out << "NA";
     return out;
   }

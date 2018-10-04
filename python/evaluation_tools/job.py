@@ -257,9 +257,8 @@ class Job(object):
     """
         string = string.replace('<BAG_FILENAME>',
                                 self.dataset_paths[dataset_index])
-        string = string.replace('<BAG_FOLDER>',
-                                os.path.dirname(
-                                    self.dataset_paths[dataset_index]))
+        string = string.replace(
+            '<BAG_FOLDER>', os.path.dirname(self.dataset_paths[dataset_index]))
         for i in range(0, len(self.dataset_names)):
             string = string.replace('<BAG_FILENAME_' + str(i) + '>',
                                     self.dataset_names[i])
