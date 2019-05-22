@@ -10,8 +10,9 @@
 
 namespace evaluation {
 namespace internal {
-const EvaluationDataCollectorImpl::SlotId EvaluationDataCollectorImpl::kCommonSlotId =
-    EvaluationDataCollectorImpl::SlotId::Random();
+const EvaluationDataCollectorImpl::SlotId
+    EvaluationDataCollectorImpl::kCommonSlotId =
+        aslam::createRandomId<aslam::NFramesId>();
 
 EvaluationDataCollectorImpl::ChannelGroup* EvaluationDataCollectorImpl::getSlot(const SlotId& slot_id) {
   CHECK(slot_id.isValid());
